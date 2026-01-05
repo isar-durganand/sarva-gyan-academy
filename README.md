@@ -115,7 +115,7 @@ Click the theme toggle button in the header to switch between light and dark the
 
 ## License
 
-This project is developed for Sarva Gyaan Academy.
+This project is developed for Durganand Ishar.
 
 ---
 
