@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Mark Attendance - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Mark Attendance<small>Record daily attendance for students</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-calendar-check"></i> Mark Attendance</h3>
+    </div>
+
+    <!-- Batch & Date Selection -->
+    <div class="filter-bar">
+        <form method="GET" class="d-flex gap-3" style="width: 100%; align-items: flex-end; flex-wrap: wrap;">
+            <div class="filter-group" style="min-width: 200px;">
+                <label>Select Batch</label>
+                <select name="batch_id" class="form-control form-select" required>
+                    <option value="">Choose Batch...</option>
+                    {% for batch in batches %}
+                    <option value="{{ batch.id }}" {{ 'selected' if selected_batch and selected_batch.id==batch.id }}>{{
+                        batch.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Date</label>
+                <input type="date" name="date" class="form-control" value="{{ attendance_date.strftime('%Y-%m-%d') }}"
+                    required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> Load Students
+            </button>
+        </form>
+    </div>
+
+    {% if students %}
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="batch_id" value="{{ selected_batch.id }}">
+        <input type="hidden" name="date" value="{{ attendance_date.strftime('%Y-%m-%d') }}">
+
+        <div class="card-body" style="padding: 0;">
+            <div
+                style="padding: 15px 20px; background: var(--bg-table-stripe); border-bottom: 1px solid var(--border-color);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ selected_batch.name }}</strong> - {{ attendance_date.strftime('%d %B %Y') }}
+                        <span class="badge badge-primary ml-2">{{ students|length }} students</span>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-success"
+                            onclick="AttendanceHelper.markAll('PRESENT')">
+                            <i class="bi bi-check-all"></i> Mark All Present
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger"
+                            onclick="AttendanceHelper.markAll('ABSENT')">
+                            <i class="bi bi-x-lg"></i> Mark All Absent
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    {% set existing = attendance_records.get(student.id) %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar avatar-sm">{{ student.first_name[0] }}</div>
+                                <div>
+                                    <strong>{{ student.full_name }}</strong>
+                                    <br><small class="text-muted">{{ student.student_id }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="attendance-options">
+                                <label class="attendance-option">
+                                    <input type="radio" name="status_{{ student.id }}" value="PRESENT" {{ 'checked' if
+                                        existing and existing.status=='PRESENT' else 'checked' if not existing }}>
+                                    <span class="status-present"><i class="bi bi-check-circle-fill"></i> Present</span>
+                                </label>
+                                <label class="attendance-option">
+                                    <input type="radio" name="status_{{ student.id }}" value="ABSENT" {{ 'checked' if
+                                        existing and existing.status=='ABSENT' }}>
+                                    <span class="status-absent"><i class="bi bi-x-circle-fill"></i> Absent</span>
+                                </label>
+                                <label class="attendance-option">
+                                    <input type="radio" name="status_{{ student.id }}" value="LATE" {{ 'checked' if
+                                        existing and existing.status=='LATE' }}>
+                                    <span class="status-late"><i class="bi bi-clock-fill"></i> Late</span>
+                                </label>
+                            </div>
+                        </td>
+                        <td>
+                            <input type="text" name="remarks_{{ student.id }}" class="form-control"
+                                placeholder="Optional remarks" value="{{ existing.remarks if existing else '' }}"
+                                style="width: 200px;">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-lg"></i> Save Attendance
+            </button>
+        </div>
+    </form>
+
+    {% elif selected_batch %}
+    <div class="card-body">
+        <div class="empty-state">
+            <i class="bi bi-person-x"></i>
+            <h3>No Students in This Batch</h3>
+            <p>Add students to {{ selected_batch.name }} to mark attendance.</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="card-body">
+        <div class="empty-state">
+            <i class="bi bi-hand-index"></i>
+            <h3>Select a Batch</h3>
+            <p>Choose a batch and date above to mark attendance.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

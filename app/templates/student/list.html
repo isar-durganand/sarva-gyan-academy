@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+
+{% block title %}Students - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Students<small>Manage all registered students</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center gap-3">
+            <h3 class="card-title">All Students</h3>
+            <span class="badge badge-primary">{{ students.total }} total</span>
+        </div>
+        <a href="{{ url_for('student.add_student') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill"></i> Add Student
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <form method="GET" class="d-flex gap-3" style="flex-wrap: wrap; width: 100%; align-items: flex-end;">
+            <div class="filter-group" style="flex: 1; min-width: 200px;">
+                <label>Search</label>
+                <input type="text" name="search" value="{{ search }}" placeholder="Name, ID, or Phone..."
+                    class="form-control">
+            </div>
+            <div class="filter-group">
+                <label>Batch</label>
+                <select name="batch" class="form-control form-select">
+                    <option value="">All Batches</option>
+                    {% for batch in batches %}
+                    <option value="{{ batch.id }}" {{ 'selected' if selected_batch==batch.id }}>{{ batch.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select name="status" class="form-control form-select">
+                    <option value="">All Status</option>
+                    <option value="ACTIVE" {{ 'selected' if selected_status=='ACTIVE' }}>Active</option>
+                    <option value="INACTIVE" {{ 'selected' if selected_status=='INACTIVE' }}>Inactive</option>
+                    <option value="GRADUATED" {{ 'selected' if selected_status=='GRADUATED' }}>Graduated</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Search
+            </button>
+            <a href="{{ url_for('student.list_students') }}" class="btn btn-outline">Reset</a>
+        </form>
+    </div>
+
+    <!-- Bulk Actions Bar (hidden by default) -->
+    <div id="bulkActionsBar" class="filter-bar"
+        style="display: none; background: var(--bg-card); border-bottom: 2px solid var(--primary);">
+        <form method="POST" action="{{ url_for('student.bulk_move_batch') }}" id="bulkMoveForm" class="d-flex gap-3"
+            style="width: 100%; align-items: center;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div id="selectedStudentInputs"></div>
+
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-check2-square" style="font-size: 20px; color: var(--primary);"></i>
+                <span><strong id="selectedCount">0</strong> student(s) selected</span>
+            </div>
+
+            <div class="filter-group" style="margin-left: auto;">
+                <label>Move to Batch</label>
+                <select name="target_batch_id" class="form-control form-select" required style="min-width: 180px;">
+                    <option value="">Select Target Batch...</option>
+                    {% for batch in batches %}
+                    <option value="{{ batch.id }}">{{ batch.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-arrow-right-circle"></i> Move Selected
+            </button>
+            <button type="button" class="btn btn-danger" onclick="showBulkDeleteConfirm()">
+                <i class="bi bi-trash"></i> Delete Selected
+            </button>
+            <button type="button" class="btn btn-outline" onclick="clearSelection()">
+                <i class="bi bi-x-lg"></i> Clear
+            </button>
+        </form>
+    </div>
+
+    <!-- Bulk Delete Confirmation -->
+    <div id="bulkDeleteConfirm" class="inline-confirm">
+        <div class="inline-confirm-content">
+            <div class="inline-confirm-message">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>Are you sure you want to permanently delete <strong id="deleteCountDisplay">0</strong> student(s)?
+                    This action cannot be undone.</span>
+            </div>
+            <div class="inline-confirm-actions">
+                <form method="POST" action="{{ url_for('student.bulk_delete') }}" id="bulkDeleteForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div id="deleteStudentInputs"></div>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Yes, Delete
+                    </button>
+                </form>
+                <button type="button" class="btn btn-outline" onclick="hideBulkDeleteConfirm()">
+                    <i class="bi bi-x-lg"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body" style="padding: 0;">
+        {% if students.items %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" title="Select All">
+                        </th>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Batch</th>
+                        <th>Phone</th>
+                        <th>Fee Status</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students.items %}
+                    {% set fee_status = fee_statuses.get(student.id, {}) %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="student-checkbox" value="{{ student.id }}"
+                                data-name="{{ student.full_name }}" onchange="updateSelection()">
+                        </td>
+                        <td><strong>{{ student.student_id }}</strong></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar avatar-sm">{{ student.first_name[0] }}</div>
+                                <a href="{{ url_for('student.view_student', id=student.id) }}">{{ student.full_name
+                                    }}</a>
+                            </div>
+                        </td>
+                        <td>{{ student.batch.name if student.batch else '-' }}</td>
+                        <td>{{ student.phone or '-' }}</td>
+                        <td>
+                            {% if fee_status.is_overdue %}
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge badge-danger">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> {{ fee_status.overdue_days }} days
+                                    overdue
+                                </span>
+                                <a href="{{ url_for('fee.collect_fee', student_id=student.id) }}"
+                                    class="btn btn-sm btn-danger">
+                                    Collect Now
+                                </a>
+                            </div>
+                            {% elif fee_status.days_left <= 7 %} <span class="badge badge-warning">
+                                <i class="bi bi-clock-fill"></i> {{ fee_status.days_left }} days left
+                                </span>
+                                {% elif fee_status.days_left <= 15 %} <span class="badge badge-info"
+                                    style="background: #06b6d4;">
+                                    <i class="bi bi-clock"></i> {{ fee_status.days_left }} days left
+                                    </span>
+                                    {% else %}
+                                    <span class="badge badge-success">
+                                        <i class="bi bi-check-circle"></i> {{ fee_status.days_left }} days left
+                                    </span>
+                                    {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if student.status == 'ACTIVE' else 'secondary' }}">
+                                {{ student.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('student.view_student', id=student.id) }}"
+                                    class="btn btn-sm btn-outline" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('student.edit_student', id=student.id) }}"
+                                    class="btn btn-sm btn-outline" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('fee.collect_fee', student_id=student.id) }}"
+                                    class="btn btn-sm btn-outline" title="Collect Fee">
+                                    <i class="bi bi-cash"></i>
+                                </a>
+                                {% if student.status == 'ACTIVE' %}
+                                <button type="button" class="btn btn-sm btn-outline" title="Deactivate"
+                                    style="color: var(--warning);"
+                                    onclick="showRowConfirm({{ student.id }}, 'deactivate', '{{ student.full_name }}')">
+                                    <i class="bi bi-toggle-off"></i>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn btn-sm btn-outline" title="Activate"
+                                    style="color: var(--success);"
+                                    onclick="showRowConfirm({{ student.id }}, 'activate', '{{ student.full_name }}')">
+                                    <i class="bi bi-toggle-on"></i>
+                                </button>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline" title="Delete"
+                                    style="color: var(--danger);"
+                                    onclick="showRowConfirm({{ student.id }}, 'delete', '{{ student.full_name }}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            <!-- Inline confirmation forms (hidden by default) -->
+                            <form id="deactivate-form-{{ student.id }}"
+                                action="{{ url_for('student.deactivate_student', id=student.id) }}" method="POST"
+                                style="display: none;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            </form>
+                            <form id="activate-form-{{ student.id }}"
+                                action="{{ url_for('student.activate_student', id=student.id) }}" method="POST"
+                                style="display: none;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            </form>
+                            <form id="delete-form-{{ student.id }}"
+                                action="{{ url_for('student.delete_student', id=student.id) }}" method="POST"
+                                style="display: none;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            </form>
+                        </td>
+                    </tr>
+                    <!-- Confirmation row for this student -->
+                    <tr class="confirm-row" id="confirm-row-{{ student.id }}">
+                        <td colspan="8">
+                            <div class="confirm-row-content">
+                                <div class="confirm-row-message">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    <span id="confirm-message-{{ student.id }}"></span>
+                                </div>
+                                <div class="confirm-row-actions">
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                        id="confirm-btn-{{ student.id }}">
+                                        <i class="bi bi-check-lg"></i> Confirm
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline"
+                                        onclick="hideRowConfirm({{ student.id }})">
+                                        <i class="bi bi-x-lg"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if students.pages > 1 %}
+        <div class="card-footer">
+            <ul class="pagination">
+                {% if students.has_prev %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="?page={{ students.prev_num }}&search={{ search }}&batch={{ selected_batch or '' }}&status={{ selected_status or '' }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for p in students.iter_pages() %}
+                {% if p %}
+                <li class="page-item {{ 'active' if p == students.page }}">
+                    <a class="page-link"
+                        href="?page={{ p }}&search={{ search }}&batch={{ selected_batch or '' }}&status={{ selected_status or '' }}">{{
+                        p }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
+
+                {% if students.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="?page={{ students.next_num }}&search={{ search }}&batch={{ selected_batch or '' }}&status={{ selected_status or '' }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <h3>No Students Found</h3>
+            <p>{% if search %}No students match your search criteria.{% else %}Get started by adding your first
+                student.{% endif %}</p>
+            <a href="{{ url_for('student.add_student') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus-fill"></i> Add First Student
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedStudents = new Set();
+
+    function toggleSelectAll(checkbox) {
+        const checkboxes = document.querySelectorAll('.student-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = checkbox.checked;
+            if (checkbox.checked) {
+                selectedStudents.add(cb.value);
+            } else {
+                selectedStudents.delete(cb.value);
+            }
+        });
+        updateBulkActionsBar();
+    }
+
+    function updateSelection() {
+        selectedStudents.clear();
+        document.querySelectorAll('.student-checkbox:checked').forEach(cb => {
+            selectedStudents.add(cb.value);
+        });
+        updateBulkActionsBar();
+
+        // Update "select all" checkbox
+        const allCheckboxes = document.querySelectorAll('.student-checkbox');
+        const selectAllCheckbox = document.getElementById('selectAll');
+        selectAllCheckbox.checked = selectedStudents.size === allCheckboxes.length && allCheckboxes.length > 0;
+    }
+
+    function updateBulkActionsBar() {
+        const bar = document.getElementById('bulkActionsBar');
+        const countSpan = document.getElementById('selectedCount');
+        const inputsContainer = document.getElementById('selectedStudentInputs');
+
+        countSpan.textContent = selectedStudents.size;
+
+        if (selectedStudents.size > 0) {
+            bar.style.display = 'block';
+            // Create hidden inputs for form submission
+            inputsContainer.innerHTML = '';
+            selectedStudents.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'student_ids';
+                input.value = id;
+                inputsContainer.appendChild(input);
+            });
+        } else {
+            bar.style.display = 'none';
+        }
+    }
+
+    function clearSelection() {
+        selectedStudents.clear();
+        document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('selectAll').checked = false;
+        updateBulkActionsBar();
+        hideBulkDeleteConfirm();
+    }
+
+    // Inline confirmation for bulk delete
+    function showBulkDeleteConfirm() {
+        const confirmDiv = document.getElementById('bulkDeleteConfirm');
+        const deleteInputs = document.getElementById('deleteStudentInputs');
+        const countDisplay = document.getElementById('deleteCountDisplay');
+
+        countDisplay.textContent = selectedStudents.size;
+
+        // Create hidden inputs for delete form
+        deleteInputs.innerHTML = '';
+        selectedStudents.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'student_ids';
+            input.value = id;
+            deleteInputs.appendChild(input);
+        });
+
+        confirmDiv.classList.add('show');
+    }
+
+    function hideBulkDeleteConfirm() {
+        document.getElementById('bulkDeleteConfirm').classList.remove('show');
+    }
+
+    // Inline confirmation for individual row actions
+    function showRowConfirm(studentId, action, studentName) {
+        // Hide any other confirm rows first
+        document.querySelectorAll('.confirm-row.show').forEach(row => row.classList.remove('show'));
+
+        const confirmRow = document.getElementById('confirm-row-' + studentId);
+        const confirmMessage = document.getElementById('confirm-message-' + studentId);
+        const confirmBtn = document.getElementById('confirm-btn-' + studentId);
+
+        // Set message based on action
+        let message = '';
+        let btnClass = 'btn btn-sm btn-danger';
+
+        switch (action) {
+            case 'delete':
+                message = `Permanently delete <strong>${studentName}</strong>? This cannot be undone.`;
+                break;
+            case 'deactivate':
+                message = `Deactivate <strong>${studentName}</strong>?`;
+                btnClass = 'btn btn-sm btn-warning';
+                break;
+            case 'activate':
+                message = `Activate <strong>${studentName}</strong>?`;
+                btnClass = 'btn btn-sm btn-success';
+                break;
+        }
+
+        confirmMessage.innerHTML = message;
+        confirmBtn.className = btnClass;
+        confirmBtn.onclick = function () {
+            document.getElementById(action + '-form-' + studentId).submit();
+        };
+
+        confirmRow.classList.add('show');
+    }
+
+    function hideRowConfirm(studentId) {
+        document.getElementById('confirm-row-' + studentId).classList.remove('show');
+    }
+</script>
+{% endblock %}

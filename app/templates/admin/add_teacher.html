@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Add Teacher{% endblock %}
+{% block page_title %}Add Teacher<small>Create new teacher account</small>{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-person-plus-fill"></i> New Teacher</h3>
+    </div>
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Full Name <span class="required">*</span></label>
+                    <input type="text" name="username" class="form-control" required placeholder="Enter teacher's name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email <span class="required">*</span></label>
+                    <input type="email" name="email" class="form-control" required placeholder="teacher@example.com">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Password <span class="required">*</span></label>
+                    <input type="password" name="password" class="form-control" required
+                        placeholder="Set password (min 6 chars)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone <span class="required">*</span></label>
+                    <input type="tel" name="phone" class="form-control" required placeholder="Phone number">
+                </div>
+            </div>
+
+            <div class="alert alert-info" style="margin-top: 20px;">
+                <i class="bi bi-info-circle-fill"></i>
+                <div>
+                    The teacher will be able to log in with their email and password to:
+                    <ul style="margin: 10px 0 0 20px;">
+                        <li>View assigned batches</li>
+                        <li>Mark attendance for their batches</li>
+                        <li>View student details</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Add Teacher</button>
+            <a href="{{ url_for('admin.list_teachers') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

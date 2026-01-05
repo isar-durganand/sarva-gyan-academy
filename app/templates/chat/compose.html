@@ -1,0 +1,551 @@
+{% extends "base.html" %}
+
+{% block title %}New Message - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}New Message{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* WhatsApp-style compose page */
+    .compose-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 140px);
+        max-height: 700px;
+        background: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    .compose-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #075e54 0%, #128c7e 100%);
+        color: white;
+    }
+
+    .compose-header .btn-back {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        transition: background 0.2s;
+    }
+
+    .compose-header .btn-back:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+    }
+
+    .compose-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    /* Contact selection section */
+    .contact-section {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-body);
+    }
+
+    .contact-section label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #128c7e;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+    }
+
+    .search-input-wrapper i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 16px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 16px 12px 42px;
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        font-size: 14px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        transition: all 0.2s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #128c7e;
+        box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.1);
+    }
+
+    .search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    /* Selected recipient display */
+    .selected-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, rgba(18, 140, 126, 0.1) 0%, rgba(7, 94, 84, 0.05) 100%);
+        border-radius: 12px;
+        margin-top: 12px;
+        border: 1px solid rgba(18, 140, 126, 0.2);
+    }
+
+    .selected-user.hidden {
+        display: none;
+    }
+
+    .selected-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #128c7e 0%, #075e54 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .selected-info {
+        flex: 1;
+    }
+
+    .selected-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .selected-role {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+
+    .btn-remove-user {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        padding: 8px;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: all 0.2s;
+    }
+
+    .btn-remove-user:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    /* User dropdown results */
+    .user-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        z-index: 100;
+        max-height: 280px;
+        overflow-y: auto;
+        margin-top: 8px;
+        display: none;
+    }
+
+    .user-results.show {
+        display: block;
+    }
+
+    .user-result-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: background 0.15s;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .user-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .user-result-item:hover {
+        background: rgba(18, 140, 126, 0.08);
+    }
+
+    .user-result-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #128c7e 0%, #25d366 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .user-result-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .user-result-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .user-result-email {
+        font-size: 12px;
+        color: var(--text-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .user-result-role {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .user-result-role.admin {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+    }
+
+    .user-result-role.teacher {
+        background: rgba(99, 102, 241, 0.12);
+        color: #6366f1;
+    }
+
+    .user-result-role.student {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+    }
+
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .loading-results {
+        padding: 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    /* Message section */
+    .message-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        background: var(--bg-body);
+    }
+
+    .message-section label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #128c7e;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .message-textarea {
+        flex: 1;
+        width: 100%;
+        padding: 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 14px;
+        font-family: inherit;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        resize: none;
+        min-height: 120px;
+        transition: all 0.2s;
+    }
+
+    .message-textarea:focus {
+        outline: none;
+        border-color: #128c7e;
+        box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.1);
+    }
+
+    .message-textarea::placeholder {
+        color: var(--text-muted);
+    }
+
+    /* Footer with send button */
+    .compose-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 16px 20px;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-card);
+    }
+
+    .btn-cancel {
+        padding: 12px 24px;
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .btn-send {
+        padding: 12px 28px;
+        background: linear-gradient(135deg, #128c7e 0%, #25d366 100%);
+        border: none;
+        border-radius: 24px;
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(18, 140, 126, 0.3);
+    }
+
+    .btn-send:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(18, 140, 126, 0.4);
+    }
+
+    .btn-send:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-send i {
+        font-size: 16px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('chat.send_new_message') }}" method="POST" id="composeForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="recipient_id" id="recipientId" value="{{ recipient.id if recipient else '' }}">
+
+    <div class="compose-container">
+        <div class="compose-header">
+            <a href="{{ url_for('chat.inbox') }}" class="btn-back">
+                <i class="bi bi-arrow-left"></i>
+                Back
+            </a>
+            <h2>New Message</h2>
+        </div>
+
+        <div class="contact-section">
+            <label>Send To</label>
+            <div class="search-input-wrapper">
+                <i class="bi bi-search"></i>
+                <input type="text" id="userSearch" class="search-input {% if recipient %}hidden{% endif %}"
+                    placeholder="Search by name or email..." autocomplete="off">
+                <div class="user-results" id="userResults"></div>
+            </div>
+
+            <div class="selected-user {% if not recipient %}hidden{% endif %}" id="selectedUser">
+                {% if recipient %}
+                <div class="selected-avatar">{{ recipient.username[0]|upper }}</div>
+                <div class="selected-info">
+                    <div class="selected-name">{{ recipient.username }}</div>
+                    <div class="selected-role">{{ recipient.role }}</div>
+                </div>
+                <button type="button" class="btn-remove-user" onclick="clearRecipient()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="message-section">
+            <label>Message</label>
+            <textarea name="content" id="messageContent" class="message-textarea"
+                placeholder="Type your message here..." required></textarea>
+        </div>
+
+        <div class="compose-footer">
+            <a href="{{ url_for('chat.inbox') }}" class="btn-cancel">Cancel</a>
+            <button type="submit" class="btn-send" id="sendBtn">
+                <i class="bi bi-send-fill"></i>
+                Send Message
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const userSearch = document.getElementById('userSearch');
+    const userResults = document.getElementById('userResults');
+    const recipientId = document.getElementById('recipientId');
+    const selectedUser = document.getElementById('selectedUser');
+    const sendBtn = document.getElementById('sendBtn');
+    let searchTimeout;
+    let allUsers = [];
+
+    // Load all users on page load for quick selection
+    async function loadAllUsers() {
+        try {
+            const response = await fetch('{{ url_for("chat.search_users") }}?q=*');
+            allUsers = await response.json();
+        } catch (e) {
+            console.log('Could not preload users');
+        }
+    }
+
+    // Show results on focus
+    userSearch.addEventListener('focus', function () {
+        const query = this.value.trim();
+        if (query.length >= 1) {
+            searchUsers(query);
+        } else {
+            // Show instruction
+            userResults.innerHTML = '<div class="no-results">Type at least 2 characters to search</div>';
+            userResults.classList.add('show');
+        }
+    });
+
+    userSearch.addEventListener('input', function () {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+
+        if (query.length < 2) {
+            userResults.innerHTML = '<div class="no-results">Type at least 2 characters to search</div>';
+            userResults.classList.add('show');
+            return;
+        }
+
+        userResults.innerHTML = '<div class="loading-results"><i class="bi bi-hourglass-split"></i> Searching...</div>';
+        userResults.classList.add('show');
+
+        searchTimeout = setTimeout(() => {
+            searchUsers(query);
+        }, 200);
+    });
+
+    async function searchUsers(query) {
+        try {
+            const response = await fetch(`{{ url_for("chat.search_users") }}?q=${encodeURIComponent(query)}`);
+            const users = await response.json();
+
+            if (users.length === 0) {
+                userResults.innerHTML = '<div class="no-results">No users found matching "' + query + '"</div>';
+            } else {
+                userResults.innerHTML = users.map(user => `
+                    <div class="user-result-item" onclick="selectUser(${user.id}, '${user.username.replace(/'/g, "\\'")}', '${user.role}')">
+                        <div class="user-result-avatar">${user.username[0].toUpperCase()}</div>
+                        <div class="user-result-info">
+                            <div class="user-result-name">${user.username}</div>
+                            <div class="user-result-email">${user.email}</div>
+                        </div>
+                        <span class="user-result-role ${user.role.toLowerCase()}">${user.role}</span>
+                    </div>
+                `).join('');
+            }
+            userResults.classList.add('show');
+        } catch (e) {
+            userResults.innerHTML = '<div class="no-results">Error searching users</div>';
+        }
+    }
+
+    function selectUser(id, username, role) {
+        recipientId.value = id;
+        userSearch.classList.add('hidden');
+        userResults.classList.remove('show');
+
+        selectedUser.innerHTML = `
+            <div class="selected-avatar">${username[0].toUpperCase()}</div>
+            <div class="selected-info">
+                <div class="selected-name">${username}</div>
+                <div class="selected-role">${role}</div>
+            </div>
+            <button type="button" class="btn-remove-user" onclick="clearRecipient()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        `;
+        selectedUser.classList.remove('hidden');
+
+        // Focus on message
+        document.getElementById('messageContent').focus();
+    }
+
+    function clearRecipient() {
+        recipientId.value = '';
+        selectedUser.classList.add('hidden');
+        selectedUser.innerHTML = '';
+        userSearch.classList.remove('hidden');
+        userSearch.value = '';
+        userSearch.focus();
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.search-input-wrapper')) {
+            userResults.classList.remove('show');
+        }
+    });
+
+    // Validate form before submit
+    document.getElementById('composeForm').addEventListener('submit', function (e) {
+        if (!recipientId.value) {
+            e.preventDefault();
+            alert('Please select a recipient first');
+            userSearch.focus();
+        }
+    });
+</script>
+{% endblock %}

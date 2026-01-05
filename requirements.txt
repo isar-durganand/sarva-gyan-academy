@@ -1,0 +1,24 @@
+# Flask and extensions
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+Flask-Migrate==4.0.5
+
+# Security
+Werkzeug==3.0.1
+email-validator==2.1.0
+python-dotenv==1.0.0
+
+# Database
+SQLAlchemy==2.0.23
+
+# PDF and Excel generation
+reportlab==4.0.7
+openpyxl==3.1.2
+
+# Date/Time handling
+python-dateutil==2.8.2
+
+# Charts (optional, for backend chart generation)
+Pillow==10.1.0

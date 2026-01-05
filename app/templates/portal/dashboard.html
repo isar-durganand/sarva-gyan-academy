@@ -1,0 +1,812 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}My Dashboard - {{ student.full_name }}{% endblock %}
+{% block page_title %}Welcome, {{ student.first_name }}!<small>Your Student Portal</small>{% endblock %}
+
+{% block content %}
+<!-- Student Profile Hero -->
+<div class="portal-hero">
+    <div class="portal-hero-content">
+        <div class="student-avatar-large">
+            {{ student.first_name[0].upper() }}{{ student.last_name[0].upper() if student.last_name else '' }}
+        </div>
+        <div class="student-info-hero">
+            <h2 class="student-name-hero">{{ student.full_name }}</h2>
+            <div class="student-meta-hero">
+                <span class="meta-badge"><i class="bi bi-person-badge"></i> {{ student.student_id }}</span>
+                <span class="meta-badge"><i class="bi bi-collection"></i> {{ student.batch.name if student.batch else
+                    'No Batch' }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="portal-hero-stats">
+        <div class="hero-stat">
+            <span
+                class="hero-stat-value {{ 'text-success' if attendance_percentage >= 75 else 'text-warning' if attendance_percentage >= 50 else 'text-danger' }}">{{
+                attendance_percentage }}%</span>
+            <span class="hero-stat-label">Attendance</span>
+        </div>
+    </div>
+    <div class="portal-hero-decoration"></div>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="portal-stats-grid">
+    <div class="portal-stat-card">
+        <div class="portal-stat-icon primary">
+            <i class="bi bi-calendar-check-fill"></i>
+        </div>
+        <div class="portal-stat-content">
+            <span class="portal-stat-value">{{ attendance_percentage }}%</span>
+            <span class="portal-stat-label">This Month</span>
+            <div class="portal-stat-bar">
+                <div class="portal-stat-bar-fill {{ 'success' if attendance_percentage >= 75 else 'warning' if attendance_percentage >= 50 else 'danger' }}"
+                    style="width: {{ attendance_percentage }}%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="portal-stat-card">
+        <div class="portal-stat-icon warning">
+            <i class="bi bi-megaphone-fill"></i>
+        </div>
+        <div class="portal-stat-content">
+            <span class="portal-stat-value">{{ announcements|length }}</span>
+            <span class="portal-stat-label">Updates</span>
+        </div>
+    </div>
+
+    <div class="portal-stat-card">
+        <div class="portal-stat-icon success">
+            <i class="bi bi-currency-rupee"></i>
+        </div>
+        <div class="portal-stat-content">
+            <span class="portal-stat-value">{{ 'Paid' if fee_status == 'up_to_date' else 'Pending' }}</span>
+            <span class="portal-stat-label">Fee Status</span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="portal-quick-actions">
+    <a href="{{ url_for('portal.my_attendance') }}" class="portal-action-btn">
+        <i class="bi bi-calendar3"></i>
+        <span>Attendance</span>
+    </a>
+    <a href="{{ url_for('portal.my_fees') }}" class="portal-action-btn">
+        <i class="bi bi-receipt"></i>
+        <span>Fees</span>
+    </a>
+    <a href="{{ url_for('portal.my_announcements') }}" class="portal-action-btn">
+        <i class="bi bi-megaphone"></i>
+        <span>Updates</span>
+    </a>
+    <a href="{{ url_for('portal.my_profile') }}" class="portal-action-btn">
+        <i class="bi bi-person"></i>
+        <span>Profile</span>
+    </a>
+</div>
+
+<!-- Dashboard Grid -->
+<div class="portal-dashboard-grid">
+    <!-- Recent Attendance -->
+    <div class="card portal-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="bi bi-calendar-check" style="color: var(--success);"></i>
+                Recent Attendance
+            </h3>
+            <a href="{{ url_for('portal.my_attendance') }}" class="btn btn-sm btn-ghost">View All <i
+                    class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if recent_attendance %}
+            <div class="attendance-timeline">
+                {% for att in recent_attendance %}
+                <div class="timeline-item">
+                    <div class="timeline-date">
+                        <span class="timeline-day">{{ att.date.strftime('%d') }}</span>
+                        <span class="timeline-month">{{ att.date.strftime('%b') }}</span>
+                    </div>
+                    <div class="timeline-content">
+                        <span class="timeline-weekday">{{ att.date.strftime('%A') }}</span>
+                    </div>
+                    <div class="timeline-status">
+                        <span
+                            class="status-badge {{ 'success' if att.status == 'PRESENT' else 'warning' if att.status == 'LATE' else 'danger' }}">
+                            <i
+                                class="bi bi-{{ 'check-circle' if att.status == 'PRESENT' else 'clock' if att.status == 'LATE' else 'x-circle' }}"></i>
+                            {{ att.status }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 40px;">
+                <i class="bi bi-calendar-x"></i>
+                <p>No attendance records yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Announcements -->
+    <div class="card portal-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="bi bi-megaphone-fill" style="color: var(--accent);"></i>
+                Latest Updates
+            </h3>
+            <a href="{{ url_for('portal.my_announcements') }}" class="btn btn-sm btn-ghost">View All <i
+                    class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if announcements %}
+            <div class="announcement-feed">
+                {% for a in announcements[:5] %}
+                <div class="announcement-card {{ 'pinned' if a.is_pinned }}">
+                    {% if a.is_pinned %}
+                    <div class="announcement-pin"><i class="bi bi-pin-fill"></i></div>
+                    {% endif %}
+                    <div class="announcement-header">
+                        <span
+                            class="announcement-type {{ 'holiday' if a.announcement_type == 'HOLIDAY' else 'homework' if a.announcement_type == 'HOMEWORK' else 'event' if a.announcement_type == 'EVENT' else 'notice' }}">
+                            {{ a.announcement_type }}
+                        </span>
+                        <span class="announcement-date">{{ a.created_at.strftime('%d %b') }}</span>
+                    </div>
+                    <h4 class="announcement-title">{{ a.title }}</h4>
+                    <p class="announcement-preview">{{ a.content[:80] }}{% if a.content|length > 80 %}...{% endif %}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 40px;">
+                <i class="bi bi-megaphone"></i>
+                <p>No announcements yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Events & Holidays Row -->
+{% if holidays or events %}
+<div class="portal-events-grid">
+    {% if holidays %}
+    <div class="event-card holidays">
+        <div class="event-icon">
+            <i class="bi bi-calendar-heart"></i>
+        </div>
+        <div class="event-content">
+            <h4 class="event-title">Upcoming Holidays</h4>
+            <div class="event-list">
+                {% for h in holidays %}
+                <div class="event-item">
+                    <span class="event-name">{{ h.title }}</span>
+                    <span class="event-desc">{{ h.content[:50] }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if events %}
+    <div class="event-card events">
+        <div class="event-icon">
+            <i class="bi bi-calendar-star"></i>
+        </div>
+        <div class="event-content">
+            <h4 class="event-title">Upcoming Events</h4>
+            <div class="event-list">
+                {% for e in events %}
+                <div class="event-item">
+                    <span class="event-name">{{ e.title }}</span>
+                    <span class="event-desc">{{ e.content[:50] }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Homework Section -->
+{% if homework %}
+<div class="card portal-card" style="margin-top: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="bi bi-journal-bookmark-fill" style="color: var(--info);"></i>
+            Assigned Homework
+        </h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <div class="homework-list">
+            {% for hw in homework %}
+            <div class="homework-item">
+                <div
+                    class="homework-priority {{ 'urgent' if hw.priority == 'URGENT' else 'high' if hw.priority == 'HIGH' else 'normal' }}">
+                    <i
+                        class="bi bi-{{ 'exclamation-triangle' if hw.priority == 'URGENT' else 'flag' if hw.priority == 'HIGH' else 'bookmark' }}"></i>
+                </div>
+                <div class="homework-content">
+                    <h4 class="homework-title">{{ hw.title }}</h4>
+                    <p class="homework-desc">{{ hw.content[:100] }}{% if hw.content|length > 100 %}...{% endif %}</p>
+                    <span class="homework-date">Posted: {{ hw.created_at.strftime('%d %b %Y') }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Portal Hero */
+    .portal-hero {
+        position: relative;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(16, 185, 129, 0.05) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: var(--border-radius-lg);
+        padding: 28px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        overflow: hidden;
+    }
+
+    .portal-hero-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        z-index: 1;
+    }
+
+    .student-avatar-large {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), #8b5cf6);
+        color: white;
+        font-size: 24px;
+        font-weight: 700;
+        border-radius: var(--border-radius);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .student-name-hero {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .student-meta-hero {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .meta-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 20px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .meta-badge i {
+        color: var(--primary);
+    }
+
+    .portal-hero-stats {
+        z-index: 1;
+    }
+
+    .hero-stat {
+        text-align: center;
+    }
+
+    .hero-stat-value {
+        display: block;
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .hero-stat-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .portal-hero-decoration {
+        position: absolute;
+        top: -50%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    /* Portal Stats Grid */
+    .portal-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .portal-stat-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+    }
+
+    .portal-stat-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--border-radius-sm);
+        font-size: 22px;
+    }
+
+    .portal-stat-icon.primary {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));
+        color: var(--primary);
+    }
+
+    .portal-stat-icon.warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.1));
+        color: var(--warning);
+    }
+
+    .portal-stat-icon.success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.1));
+        color: var(--success);
+    }
+
+    .portal-stat-content {
+        flex: 1;
+    }
+
+    .portal-stat-value {
+        display: block;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .portal-stat-label {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .portal-stat-bar {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        margin-top: 8px;
+        overflow: hidden;
+    }
+
+    .portal-stat-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.5s ease;
+    }
+
+    .portal-stat-bar-fill.success {
+        background: var(--success);
+    }
+
+    .portal-stat-bar-fill.warning {
+        background: var(--warning);
+    }
+
+    .portal-stat-bar-fill.danger {
+        background: var(--danger);
+    }
+
+    /* Quick Actions */
+    .portal-quick-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .portal-action-btn {
+        flex: 1;
+        min-width: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        text-decoration: none;
+        color: var(--text-muted);
+        transition: all var(--transition);
+    }
+
+    .portal-action-btn:hover {
+        color: var(--primary);
+        border-color: var(--primary);
+        box-shadow: var(--glow-primary);
+    }
+
+    .portal-action-btn i {
+        font-size: 24px;
+    }
+
+    .portal-action-btn span {
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    /* Dashboard Grid */
+    .portal-dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* Attendance Timeline */
+    .attendance-timeline {
+        padding: 0;
+    }
+
+    .timeline-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border-color);
+        transition: background var(--transition-fast);
+    }
+
+    .timeline-item:last-child {
+        border-bottom: none;
+    }
+
+    .timeline-item:hover {
+        background: var(--bg-hover);
+    }
+
+    .timeline-date {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 45px;
+    }
+
+    .timeline-day {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .timeline-month {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .timeline-content {
+        flex: 1;
+    }
+
+    .timeline-weekday {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-badge.success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+    }
+
+    .status-badge.warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+    }
+
+    .status-badge.danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+    }
+
+    /* Announcement Feed */
+    .announcement-feed {
+        padding: 0;
+    }
+
+    .announcement-card {
+        position: relative;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color);
+        transition: background var(--transition-fast);
+    }
+
+    .announcement-card:last-child {
+        border-bottom: none;
+    }
+
+    .announcement-card:hover {
+        background: var(--bg-hover);
+    }
+
+    .announcement-card.pinned {
+        background: rgba(245, 158, 11, 0.05);
+    }
+
+    .announcement-pin {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        color: var(--warning);
+    }
+
+    .announcement-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .announcement-type {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .announcement-type.holiday {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+    }
+
+    .announcement-type.homework {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--info);
+    }
+
+    .announcement-type.event {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+    }
+
+    .announcement-type.notice {
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--primary);
+    }
+
+    .announcement-date {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .announcement-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .announcement-preview {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    /* Events Grid */
+    .portal-events-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .event-card {
+        display: flex;
+        gap: 16px;
+        padding: 20px;
+        border-radius: var(--border-radius);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+    }
+
+    .event-card.holidays {
+        border-left: 3px solid var(--danger);
+    }
+
+    .event-card.events {
+        border-left: 3px solid var(--warning);
+    }
+
+    .event-icon {
+        font-size: 24px;
+    }
+
+    .event-card.holidays .event-icon {
+        color: var(--danger);
+    }
+
+    .event-card.events .event-icon {
+        color: var(--warning);
+    }
+
+    .event-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--text-primary);
+    }
+
+    .event-item {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .event-item:last-child {
+        border-bottom: none;
+    }
+
+    .event-name {
+        display: block;
+        font-weight: 500;
+        font-size: 13px;
+        color: var(--text-primary);
+    }
+
+    .event-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    /* Homework List */
+    .homework-list {
+        padding: 0;
+    }
+
+    .homework-item {
+        display: flex;
+        gap: 16px;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .homework-item:last-child {
+        border-bottom: none;
+    }
+
+    .homework-priority {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--border-radius-sm);
+        font-size: 18px;
+    }
+
+    .homework-priority.urgent {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+    }
+
+    .homework-priority.high {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+    }
+
+    .homework-priority.normal {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--info);
+    }
+
+    .homework-content {
+        flex: 1;
+    }
+
+    .homework-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .homework-desc {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        line-height: 1.4;
+    }
+
+    .homework-date {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .portal-hero {
+            padding: 20px;
+        }
+
+        .student-avatar-large {
+            width: 56px;
+            height: 56px;
+            font-size: 20px;
+        }
+
+        .student-name-hero {
+            font-size: 18px;
+        }
+
+        .portal-hero-stats {
+            display: none;
+        }
+
+        .portal-stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .portal-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .portal-action-btn {
+            min-width: auto;
+            padding: 12px;
+        }
+
+        .portal-action-btn i {
+            font-size: 20px;
+        }
+
+        .portal-dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

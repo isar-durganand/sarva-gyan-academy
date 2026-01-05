@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Teachers - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Teachers<small>Manage teaching staff</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center gap-3">
+            <h3 class="card-title">All Teachers</h3>
+            <span class="badge badge-primary">{{ teachers|length }} total</span>
+        </div>
+        <a href="{{ url_for('admin.add_teacher') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill"></i> Add Teacher
+        </a>
+    </div>
+
+    <div class="card-body" style="padding: 0;">
+        {% if teachers %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Assigned Batches</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for teacher in teachers %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar avatar-sm">{{ teacher.username[0] }}</div>
+                            <strong>{{ teacher.username }}</strong>
+                        </div>
+                    </td>
+                    <td>{{ teacher.email }}</td>
+                    <td>
+                        {% set batch_count = teacher.batches_taught|length if teacher.batches_taught else 0 %}
+                        {% if batch_count > 0 %}
+                        <span class="badge badge-info">{{ batch_count }} batch(es)</span>
+                        {% else %}
+                        <span class="text-muted">None assigned</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if teacher.is_active else 'secondary' }}">
+                            {{ 'Active' if teacher.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('admin.edit_teacher', id=teacher.id) }}" class="btn btn-sm btn-outline"
+                                title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('admin.toggle_teacher', id=teacher.id) }}"
+                                style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline"
+                                    title="{{ 'Deactivate' if teacher.is_active else 'Activate' }}">
+                                    <i
+                                        class="bi bi-{{ 'toggle-on text-success' if teacher.is_active else 'toggle-off' }}"></i>
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin.delete_teacher', id=teacher.id) }}"
+                                style="display: inline;"
+                                onsubmit="return confirm('Are you sure you want to permanently delete {{ teacher.username }}? This cannot be undone.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline" title="Delete"
+                                    style="color: var(--danger);">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-person-badge"></i>
+            <h3>No Teachers Yet</h3>
+            <p>Add your first teacher to get started.</p>
+            <a href="{{ url_for('admin.add_teacher') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus-fill"></i> Add First Teacher
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

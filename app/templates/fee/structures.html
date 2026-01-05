@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Structures - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Fee Structures<small>Manage fee configurations</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Fee Structures</h3>
+        <a href="{{ url_for('fee.add_structure') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Add Structure
+        </a>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if structures %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Batch</th>
+                    <th>Amount</th>
+                    <th>Frequency</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fs in structures %}
+                <tr id="structure-row-{{ fs.id }}">
+                    <td><strong>{{ fs.name }}</strong><br><small class="text-muted">{{ fs.description or '' }}</small>
+                    </td>
+                    <td>{{ fs.batch.name if fs.batch else 'All Batches' }}</td>
+                    <td class="text-primary"><strong>₹{{ "{:,.0f}".format(fs.amount) }}</strong></td>
+                    <td><span class="badge badge-secondary">{{ fs.frequency }}</span></td>
+                    <td><span class="badge badge-{{ 'success' if fs.is_active else 'secondary' }}">{{ 'Active' if
+                            fs.is_active else 'Inactive' }}</span></td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('fee.edit_structure', id=fs.id) }}" class="btn btn-sm btn-outline">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline" style="color: var(--danger);"
+                                onclick="showDeleteConfirm({{ fs.id }}, '{{ fs.name }}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        <form id="delete-form-{{ fs.id }}" action="{{ url_for('fee.delete_structure', id=fs.id) }}"
+                            method="POST" style="display: none;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        </form>
+                    </td>
+                </tr>
+                <!-- Confirmation row -->
+                <tr class="confirm-row" id="confirm-row-{{ fs.id }}">
+                    <td colspan="6">
+                        <div class="confirm-row-content">
+                            <div class="confirm-row-message">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <span>Delete <strong id="confirm-name-{{ fs.id }}">{{ fs.name }}</strong>? This cannot
+                                    be undone.</span>
+                            </div>
+                            <div class="confirm-row-actions">
+                                <button type="button" class="btn btn-sm btn-danger"
+                                    onclick="document.getElementById('delete-form-{{ fs.id }}').submit()">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline"
+                                    onclick="hideDeleteConfirm({{ fs.id }})">
+                                    <i class="bi bi-x-lg"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-gear"></i>
+            <h3>No Fee Structures</h3>
+            <p>Create fee structures to define tuition and other fees.</p>
+            <a href="{{ url_for('fee.add_structure') }}" class="btn btn-primary">Create Structure</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showDeleteConfirm(id, name) {
+        // Hide any other confirm rows first
+        document.querySelectorAll('.confirm-row.show').forEach(row => row.classList.remove('show'));
+        document.getElementById('confirm-row-' + id).classList.add('show');
+    }
+
+    function hideDeleteConfirm(id) {
+        document.getElementById('confirm-row-' + id).classList.remove('show');
+    }
+</script>
+{% endblock %}

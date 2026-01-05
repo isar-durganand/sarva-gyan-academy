@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Fee Defaulters{% endblock %}
+{% block page_title %}Fee Defaulters<small>Overdue payments</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Overdue Payments</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if overdue %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Due Amount</th>
+                    <th>Due Date</th>
+                    <th>Days Overdue</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for due in overdue %}
+                <tr>
+                    <td><a href="{{ url_for('student.view_student', id=due.student_id) }}">{{ due.student.full_name
+                            }}</a></td>
+                    <td class="text-danger"><strong>₹{{ "{:,.0f}".format(due.pending_amount) }}</strong></td>
+                    <td>{{ due.due_date.strftime('%d %b %Y') }}</td>
+                    <td><span class="badge badge-danger">{{ (today - due.due_date).days }} days</span></td>
+                    <td><a href="{{ url_for('fee.collect_fee', student_id=due.student_id) }}"
+                            class="btn btn-sm btn-success"><i class="bi bi-cash"></i> Collect</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><i class="bi bi-emoji-smile"></i>
+            <h3>No Defaulters!</h3>
+            <p>All payments are on time.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

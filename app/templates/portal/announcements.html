@@ -1,0 +1,141 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Announcements{% endblock %}
+{% block page_title %}All Announcements<small>{{ student.full_name }}</small>{% endblock %}
+
+{% block extra_head %}
+<style>
+    .announcement-html-content {
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text-secondary);
+    }
+
+    .announcement-html-content p {
+        margin-bottom: 8px;
+    }
+
+    .announcement-html-content ul,
+    .announcement-html-content ol {
+        margin-left: 20px;
+        margin-bottom: 8px;
+    }
+
+    .announcement-html-content strong,
+    .announcement-html-content b {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .announcement-html-content a {
+        color: var(--primary);
+    }
+
+    .feed-item-image {
+        max-width: 300px;
+        max-height: 180px;
+        width: auto;
+        height: auto;
+        border-radius: var(--border-radius);
+        margin-top: 12px;
+        border: 1px solid var(--border-color);
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-megaphone-fill"></i> Announcements</h3>
+        {% if announcements %}
+        <span class="badge badge-primary">{{ announcements|length }} announcement{{ 's' if announcements|length > 1
+            }}</span>
+        {% endif %}
+    </div>
+    <div class="card-body" style="padding: 20px;">
+        {% if announcements %}
+        <div class="announcement-feed">
+            {% set pinned = announcements|selectattr('is_pinned')|list %}
+            {% set unpinned = announcements|rejectattr('is_pinned')|list %}
+
+            {% if pinned %}
+            <div class="pinned-section">
+                <div class="pinned-section-header">
+                    <i class="bi bi-pin-angle-fill"></i>
+                    <span>Pinned</span>
+                </div>
+                {% for a in pinned %}
+                <div class="announcement-feed-item {{ 'urgent' if a.priority == 'URGENT' }}">
+                    <div class="feed-item-content">
+                        <div class="feed-item-icon {{ a.announcement_type|lower }}">
+                            <i
+                                class="bi bi-{{ 'bell-fill' if a.announcement_type == 'NOTICE' else 'calendar-x-fill' if a.announcement_type == 'HOLIDAY' else 'calendar-event-fill' if a.announcement_type == 'EVENT' else 'book-fill' }}"></i>
+                        </div>
+                        <div class="feed-item-text">
+                            <h4>
+                                <i class="bi bi-pin-fill pin-icon"></i>
+                                {{ a.title }}
+                            </h4>
+                            <div class="badges">
+                                <span class="badge-type {{ a.announcement_type|lower }}">
+                                    {{ a.announcement_type }}
+                                </span>
+                                <span class="badge-priority {{ a.priority|lower }}">{{ a.priority }}</span>
+                            </div>
+                            <div class="announcement-html-content">{{ a.content|safe }}</div>
+                            {% if a.image_url %}
+                            <img src="{{ a.image_url }}" alt="Announcement image" class="feed-item-image">
+                            {% endif %}
+                            <div class="feed-item-meta">
+                                <span><i class="bi bi-calendar3"></i> {{ a.created_at.strftime('%d %b %Y') }}</span>
+                                {% if a.batch %}
+                                <span><i class="bi bi-mortarboard"></i> {{ a.batch.name }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% for a in unpinned %}
+            <div class="announcement-feed-item {{ 'urgent' if a.priority == 'URGENT' }}">
+                <div class="feed-item-content">
+                    <div class="feed-item-icon {{ a.announcement_type|lower }}">
+                        <i
+                            class="bi bi-{{ 'bell-fill' if a.announcement_type == 'NOTICE' else 'calendar-x-fill' if a.announcement_type == 'HOLIDAY' else 'calendar-event-fill' if a.announcement_type == 'EVENT' else 'book-fill' }}"></i>
+                    </div>
+                    <div class="feed-item-text">
+                        <h4>{{ a.title }}</h4>
+                        <div class="badges">
+                            <span class="badge-type {{ a.announcement_type|lower }}">
+                                {{ a.announcement_type }}
+                            </span>
+                            <span class="badge-priority {{ a.priority|lower }}">{{ a.priority }}</span>
+                        </div>
+                        <div class="announcement-html-content">{{ a.content|safe }}</div>
+                        {% if a.image_url %}
+                        <img src="{{ a.image_url }}" alt="Announcement image" class="feed-item-image">
+                        {% endif %}
+                        <div class="feed-item-meta">
+                            <span><i class="bi bi-calendar3"></i> {{ a.created_at.strftime('%d %b %Y') }}</span>
+                            {% if a.batch %}
+                            <span><i class="bi bi-mortarboard"></i> {{ a.batch.name }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="announcement-empty-state">
+            <i class="bi bi-megaphone"></i>
+            <h3>No Announcements</h3>
+            <p>You don't have any announcements at the moment. Check back later!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

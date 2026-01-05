@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} - Attendance{% endblock %}
+{% block page_title %}{{ student.full_name }}<small>Attendance History</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title">Attendance Record</h3>
+            <span
+                class="badge badge-{{ 'success' if percentage >= 75 else 'warning' if percentage >= 50 else 'danger' }}">{{
+                percentage }}% Attendance</span>
+        </div>
+        <a href="{{ url_for('student.view_student', id=student.id) }}" class="btn btn-outline"><i
+                class="bi bi-arrow-left"></i> Back</a>
+    </div>
+    <div class="card-body">
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="stat-icon primary"><i class="bi bi-calendar"></i></div>
+                <div class="stat-info">
+                    <h3>{{ total }}</h3>
+                    <p>Total Days</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon success"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-info">
+                    <h3>{{ present }}</h3>
+                    <p>Present</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon danger"><i class="bi bi-x-circle"></i></div>
+                <div class="stat-info">
+                    <h3>{{ total - present }}</h3>
+                    <p>Absent</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if attendance_records.items %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for att in attendance_records.items %}
+                <tr>
+                    <td>{{ att.date.strftime('%d %b %Y') }}</td>
+                    <td><span
+                            class="badge badge-{{ 'success' if att.status == 'PRESENT' else 'warning' if att.status == 'LATE' else 'danger' }}">{{
+                            att.status }}</span></td>
+                    <td>{{ att.remarks or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if attendance_records.pages > 1 %}
+        <div class="card-footer">
+            <ul class="pagination">
+                {% if attendance_records.has_prev %}<li class="page-item"><a class="page-link"
+                        href="?page={{ attendance_records.prev_num }}"><i class="bi bi-chevron-left"></i></a></li>{%
+                endif %}
+                {% for p in attendance_records.iter_pages() %}{% if p %}<li
+                    class="page-item {{ 'active' if p == attendance_records.page }}"><a class="page-link"
+                        href="?page={{ p }}">{{ p }}</a></li>{% endif %}{% endfor %}
+                {% if attendance_records.has_next %}<li class="page-item"><a class="page-link"
+                        href="?page={{ attendance_records.next_num }}"><i class="bi bi-chevron-right"></i></a></li>{%
+                endif %}
+            </ul>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state"><i class="bi bi-calendar-x"></i>
+            <h3>No Records</h3>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

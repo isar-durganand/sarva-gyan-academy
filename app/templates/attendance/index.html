@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Dashboard - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Attendance<small>Track student attendance</small>{% endblock %}
+
+{% block content %}
+<!-- Today's Stats -->
+<div class="stat-cards">
+    <div class="stat-card">
+        <div class="stat-icon primary"><i class="bi bi-people-fill"></i></div>
+        <div class="stat-info">
+            <h3>{{ total_students }}</h3>
+            <p>Total Students</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon success"><i class="bi bi-check-circle-fill"></i></div>
+        <div class="stat-info">
+            <h3>{{ today_present }}</h3>
+            <p>Present Today</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon danger"><i class="bi bi-x-circle-fill"></i></div>
+        <div class="stat-info">
+            <h3>{{ today_absent }}</h3>
+            <p>Absent Today</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon warning"><i class="bi bi-clock-fill"></i></div>
+        <div class="stat-info">
+            <h3>{{ today_late }}</h3>
+            <p>Late Today</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex gap-3">
+            <a href="{{ url_for('attendance.mark_attendance') }}" class="btn btn-primary">
+                <i class="bi bi-calendar-check"></i> Mark Attendance
+            </a>
+            <a href="{{ url_for('attendance.view_attendance') }}" class="btn btn-outline">
+                <i class="bi bi-eye"></i> View Attendance
+            </a>
+            <a href="{{ url_for('attendance.attendance_report') }}" class="btn btn-outline">
+                <i class="bi bi-file-earmark-bar-graph"></i> Reports
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Batch-wise Today's Status -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Today's Attendance by Batch</h3>
+        <span class="text-muted">{{ today.strftime('%d %B %Y') }}</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if batch_stats %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Batch</th>
+                    <th>Total Students</th>
+                    <th>Marked</th>
+                    <th>Present</th>
+                    <th>Percentage</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in batch_stats %}
+                <tr>
+                    <td><strong>{{ item.batch.name }}</strong></td>
+                    <td>{{ item.total }}</td>
+                    <td>
+                        {% if item.marked == item.total %}
+                        <span class="badge badge-success">Complete</span>
+                        {% elif item.marked > 0 %}
+                        <span class="badge badge-warning">{{ item.marked }}/{{ item.total }}</span>
+                        {% else %}
+                        <span class="badge badge-secondary">Not Started</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.present }}</td>
+                    <td>
+                        <span
+                            class="badge badge-{{ 'success' if item.percentage >= 75 else 'warning' if item.percentage >= 50 else 'danger' }}">
+                            {{ item.percentage }}%
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('attendance.mark_attendance', batch_id=item.batch.id, date=today.strftime('%Y-%m-%d')) }}"
+                            class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> Mark
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>No batches found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,595 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Greeting with Premium Gradient -->
+<div class="dashboard-hero">
+    <div class="hero-content">
+        <div class="hero-text">
+            <h2 class="hero-greeting">
+                {% set hour = now.hour if now else 12 %}
+                {% if hour < 12 %}Good morning{% elif hour < 17 %}Good afternoon{% else %}Good evening{% endif %}, {{
+                    current_user.username }}! 👋 </h2>
+                    <p class="hero-subtitle">Here's what's happening at Sarva Gyaan Academy today</p>
+        </div>
+        <div class="hero-actions">
+            <a href="{{ url_for('student.add_student') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus-fill"></i> Add Student
+            </a>
+            <a href="{{ url_for('attendance.mark_attendance') }}" class="btn btn-success">
+                <i class="bi bi-calendar-check"></i> Mark Attendance
+            </a>
+        </div>
+    </div>
+    <div class="hero-decoration"></div>
+</div>
+
+<!-- Stats Cards with Enhanced Design -->
+<div class="stat-cards">
+    <div class="stat-card stat-card-gradient-primary">
+        <div class="stat-icon primary">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="stat-info">
+            <h3 class="stat-number" data-count="{{ total_students }}">{{ total_students }}</h3>
+            <p>Total Students</p>
+        </div>
+        <div class="stat-decoration"></div>
+    </div>
+
+    <div class="stat-card stat-card-gradient-success">
+        <div class="stat-icon success">
+            <i class="bi bi-calendar-check-fill"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ today_present }}<span class="stat-divider">/</span><span class="stat-secondary">{{ today_attendance
+                    }}</span></h3>
+            <p>Today's Attendance</p>
+            {% if today_attendance > 0 %}
+            <div class="stat-progress">
+                <div class="stat-progress-bar" style="width: {{ (today_present / today_attendance * 100)|int }}%;">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="stat-decoration"></div>
+    </div>
+
+    <div class="stat-card stat-card-gradient-warning">
+        <div class="stat-icon warning">
+            <i class="bi bi-currency-rupee"></i>
+        </div>
+        <div class="stat-info">
+            <h3>₹{{ "{:,.0f}".format(monthly_collection) }}</h3>
+            <p>This Month's Collection</p>
+        </div>
+        <div class="stat-decoration"></div>
+    </div>
+
+    <div class="stat-card stat-card-gradient-info">
+        <div class="stat-icon primary">
+            <i class="bi bi-collection-fill"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ total_batches }}</h3>
+            <p>Active Batches</p>
+        </div>
+        <div class="stat-decoration"></div>
+    </div>
+</div>
+
+<!-- Quick Actions Grid -->
+<div class="quick-actions-grid">
+    <a href="{{ url_for('fee.collect_fee') }}" class="quick-action-card">
+        <div class="quick-action-icon warning">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+        <div class="quick-action-text">
+            <span class="quick-action-title">Collect Fee</span>
+            <span class="quick-action-desc">Record payment</span>
+        </div>
+        <i class="bi bi-chevron-right quick-action-arrow"></i>
+    </a>
+
+    <a href="{{ url_for('fee.pending_fees') }}" class="quick-action-card">
+        <div class="quick-action-icon danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="quick-action-text">
+            <span class="quick-action-title">Pending Fees</span>
+            <span class="quick-action-desc">View overdue</span>
+        </div>
+        <i class="bi bi-chevron-right quick-action-arrow"></i>
+    </a>
+
+    <a href="{{ url_for('attendance.view_attendance') }}" class="quick-action-card">
+        <div class="quick-action-icon primary">
+            <i class="bi bi-calendar3"></i>
+        </div>
+        <div class="quick-action-text">
+            <span class="quick-action-title">Attendance</span>
+            <span class="quick-action-desc">View reports</span>
+        </div>
+        <i class="bi bi-chevron-right quick-action-arrow"></i>
+    </a>
+
+    <a href="{{ url_for('student.import_students') }}" class="quick-action-card">
+        <div class="quick-action-icon success">
+            <i class="bi bi-cloud-upload-fill"></i>
+        </div>
+        <div class="quick-action-text">
+            <span class="quick-action-title">Import</span>
+            <span class="quick-action-desc">Bulk upload</span>
+        </div>
+        <i class="bi bi-chevron-right quick-action-arrow"></i>
+    </a>
+</div>
+
+<!-- Dashboard Grid -->
+<div class="dashboard-grid">
+    <!-- Recent Enrollments -->
+    <div class="card dashboard-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="bi bi-person-plus-fill" style="color: var(--primary);"></i>
+                Recent Enrollments
+            </h3>
+            <a href="{{ url_for('student.list_students') }}" class="btn btn-sm btn-ghost">View All <i
+                    class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if recent_enrollments %}
+            <div class="dashboard-list">
+                {% for student in recent_enrollments %}
+                <a href="{{ url_for('student.view_student', id=student.id) }}" class="dashboard-list-item">
+                    <div class="list-item-avatar">
+                        {{ student.full_name[0].upper() }}
+                    </div>
+                    <div class="list-item-content">
+                        <span class="list-item-title">{{ student.full_name }}</span>
+                        <span class="list-item-subtitle">{{ student.batch.name if student.batch else 'No Batch'
+                            }}</span>
+                    </div>
+                    <div class="list-item-meta">
+                        {{ student.enrollment_date.strftime('%d %b') if student.enrollment_date else '-' }}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 40px;">
+                <i class="bi bi-person-plus"></i>
+                <p>No recent enrollments</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="card dashboard-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="bi bi-receipt" style="color: var(--success);"></i>
+                Recent Payments
+            </h3>
+            <a href="{{ url_for('fee.list_transactions') }}" class="btn btn-sm btn-ghost">View All <i
+                    class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if recent_transactions %}
+            <div class="dashboard-list">
+                {% for txn in recent_transactions %}
+                <a href="{{ url_for('fee.view_receipt', id=txn.id) }}" class="dashboard-list-item">
+                    <div class="list-item-avatar success">
+                        <i class="bi bi-check"></i>
+                    </div>
+                    <div class="list-item-content">
+                        <span class="list-item-title">{{ txn.student.full_name if txn.student else 'N/A' }}</span>
+                        <span class="list-item-subtitle">{{ txn.receipt_number }}</span>
+                    </div>
+                    <div class="list-item-amount">
+                        ₹{{ "{:,.0f}".format(txn.amount) }}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 40px;">
+                <i class="bi bi-receipt"></i>
+                <p>No recent transactions</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Attendance Trend (if data available) -->
+    {% if attendance_trend %}
+    <div class="card dashboard-card dashboard-card-full">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="bi bi-graph-up" style="color: var(--accent);"></i>
+                Weekly Attendance Trend
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="trend-chart">
+                {% for day in attendance_trend %}
+                <div class="trend-bar-container">
+                    <div class="trend-bar"
+                        style="height: {{ (day.present / (day.total if day.total > 0 else 1) * 100)|int }}%;">
+                        <span class="trend-value">{{ day.present }}</span>
+                    </div>
+                    <span class="trend-label">{{ day.date }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard Hero */
+    .dashboard-hero {
+        position: relative;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 50%, rgba(245, 158, 11, 0.05) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: var(--border-radius-lg);
+        padding: 28px;
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .hero-greeting {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+
+    .hero-subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .hero-decoration {
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    /* Stat Cards Gradient Variations */
+    .stat-card-gradient-primary {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, transparent 100%);
+    }
+
+    .stat-card-gradient-success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
+    }
+
+    .stat-card-gradient-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, transparent 100%);
+    }
+
+    .stat-card-gradient-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, transparent 100%);
+    }
+
+    .stat-card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-decoration {
+        position: absolute;
+        bottom: -20px;
+        right: -20px;
+        width: 80px;
+        height: 80px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .stat-divider {
+        opacity: 0.4;
+        margin: 0 2px;
+    }
+
+    .stat-secondary {
+        opacity: 0.6;
+        font-size: 0.7em;
+    }
+
+    .stat-progress {
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        margin-top: 8px;
+        overflow: hidden;
+    }
+
+    .stat-progress-bar {
+        height: 100%;
+        background: var(--success);
+        border-radius: 2px;
+        transition: width 0.5s ease;
+    }
+
+    /* Quick Actions Grid */
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .quick-action-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        text-decoration: none;
+        transition: all var(--transition);
+    }
+
+    .quick-action-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--glow-primary);
+    }
+
+    .quick-action-icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--border-radius-sm);
+        font-size: 20px;
+    }
+
+    .quick-action-icon.warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.1));
+        color: var(--warning);
+    }
+
+    .quick-action-icon.danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.1));
+        color: var(--danger);
+    }
+
+    .quick-action-icon.primary {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));
+        color: var(--primary);
+    }
+
+    .quick-action-icon.success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.1));
+        color: var(--success);
+    }
+
+    .quick-action-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .quick-action-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 14px;
+    }
+
+    .quick-action-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .quick-action-arrow {
+        color: var(--text-muted);
+        opacity: 0;
+        transform: translateX(-5px);
+        transition: all var(--transition);
+    }
+
+    .quick-action-card:hover .quick-action-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .dashboard-card-full {
+        grid-column: 1 / -1;
+    }
+
+    /* Dashboard List */
+    .dashboard-list {
+        padding: 0;
+    }
+
+    .dashboard-list-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 20px;
+        text-decoration: none;
+        border-bottom: 1px solid var(--border-color);
+        transition: background var(--transition-fast);
+    }
+
+    .dashboard-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .dashboard-list-item:hover {
+        background: var(--bg-hover);
+    }
+
+    .list-item-avatar {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), #8b5cf6);
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .list-item-avatar.success {
+        background: linear-gradient(135deg, var(--success), #34d399);
+    }
+
+    .list-item-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .list-item-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .list-item-subtitle {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .list-item-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .list-item-amount {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--success);
+    }
+
+    /* Trend Chart */
+    .trend-chart {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        height: 150px;
+        gap: 8px;
+        padding: 10px 0;
+    }
+
+    .trend-bar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        height: 100%;
+    }
+
+    .trend-bar {
+        width: 100%;
+        max-width: 40px;
+        background: linear-gradient(to top, var(--primary), #8b5cf6);
+        border-radius: 6px 6px 0 0;
+        min-height: 10px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        margin-top: auto;
+        transition: height 0.5s ease;
+    }
+
+    .trend-value {
+        font-size: 11px;
+        font-weight: 600;
+        color: white;
+        padding-top: 6px;
+    }
+
+    .trend-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 8px;
+        text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-greeting {
+            font-size: 20px;
+        }
+
+        .quick-actions-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .quick-action-desc,
+        .quick-action-arrow {
+            display: none;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .trend-chart {
+            height: 120px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .quick-actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-actions {
+            width: 100%;
+        }
+
+        .hero-actions .btn {
+            flex: 1;
+        }
+    }
+</style>
+{% endblock %}

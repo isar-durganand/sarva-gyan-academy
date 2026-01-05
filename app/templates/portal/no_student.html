@@ -1,0 +1,16 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Account Not Linked{% endblock %}
+{% block page_title %}Account Issue{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; text-align: center;">
+    <div class="card-body" style="padding: 50px;">
+        <i class="bi bi-exclamation-circle-fill" style="font-size: 64px; color: var(--warning);"></i>
+        <h2 style="margin: 20px 0;">No Student Profile Linked</h2>
+        <p style="color: var(--text-muted);">Your account is not linked to a student profile. Please contact the
+            administrator.</p>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-primary" style="margin-top: 20px;"><i
+                class="bi bi-box-arrow-left"></i> Logout</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Import Students{% endblock %}
+{% block page_title %}Import Students<small>Bulk import via CSV</small>{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-upload"></i> CSV Import</h3>
+    </div>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill"></i>
+                <div>
+                    <strong>CSV Format:</strong> first_name, last_name, email, phone, parent_name, parent_phone
+                    <br>First row should be headers.
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Assign to Batch <span class="required">*</span></label>
+                <select name="batch_id" class="form-control form-select" required>
+                    <option value="">Select Batch</option>
+                    {% for batch in batches %}<option value="{{ batch.id }}">{{ batch.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">CSV File <span class="required">*</span></label>
+                <input type="file" name="file" class="form-control" accept=".csv" required>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Import</button>
+            <a href="{{ url_for('student.list_students') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

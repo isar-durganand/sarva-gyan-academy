@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Batches - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Batches/Classes<small>Manage class batches</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">All Batches</h3>
+        <a href="{{ url_for('student.add_batch') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Add Batch
+        </a>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if batches %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Batch Name</th>
+                        <th>Class</th>
+                        <th>Capacity</th>
+                        <th>Students</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in batches %}
+                    <tr id="batch-row-{{ batch.id }}">
+                        <td><strong>{{ batch.name }}</strong></td>
+                        <td>{{ batch.class_name }}</td>
+                        <td>{{ batch.capacity }}</td>
+                        <td>
+                            <span class="badge badge-primary">{{ batch.student_count }} students</span>
+                            <small class="text-muted">({{ batch.available_seats }} available)</small>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if batch.is_active else 'secondary' }}">
+                                {{ 'Active' if batch.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('student.edit_batch', id=batch.id) }}"
+                                    class="btn btn-sm btn-outline">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline" style="color: var(--danger);"
+                                    onclick="showDeleteConfirm({{ batch.id }}, '{{ batch.name }}', {{ batch.student_count }})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            <form id="delete-form-{{ batch.id }}"
+                                action="{{ url_for('student.delete_batch', id=batch.id) }}" method="POST"
+                                style="display: none;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            </form>
+                        </td>
+                    </tr>
+                    <!-- Confirmation row -->
+                    <tr class="confirm-row" id="confirm-row-{{ batch.id }}">
+                        <td colspan="6">
+                            <div class="confirm-row-content">
+                                <div class="confirm-row-message">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    <span id="confirm-message-{{ batch.id }}">Delete <strong>{{ batch.name }}</strong>?
+                                        This cannot be undone.</span>
+                                </div>
+                                <div class="confirm-row-actions">
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="document.getElementById('delete-form-{{ batch.id }}').submit()">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline"
+                                        onclick="hideDeleteConfirm({{ batch.id }})">
+                                        <i class="bi bi-x-lg"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-collection"></i>
+            <h3>No Batches Yet</h3>
+            <p>Create your first batch to start organizing students.</p>
+            <a href="{{ url_for('student.add_batch') }}" class="btn btn-primary">Create Batch</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showDeleteConfirm(id, name, studentCount) {
+        // Hide any other confirm rows first
+        document.querySelectorAll('.confirm-row.show').forEach(row => row.classList.remove('show'));
+
+        const messageSpan = document.getElementById('confirm-message-' + id);
+        if (studentCount > 0) {
+            messageSpan.innerHTML = `<strong>${name}</strong> has ${studentCount} student(s). Move them first before deleting.`;
+        } else {
+            messageSpan.innerHTML = `Delete <strong>${name}</strong>? This cannot be undone.`;
+        }
+
+        document.getElementById('confirm-row-' + id).classList.add('show');
+    }
+
+    function hideDeleteConfirm(id) {
+        document.getElementById('confirm-row-' + id).classList.remove('show');
+    }
+</script>
+{% endblock %}

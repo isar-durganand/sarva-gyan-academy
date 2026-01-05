@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Receipt #{{ transaction.receipt_number }} - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Fee Receipt{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">
+        <h3 class="card-title">Receipt #{{ transaction.receipt_number }}</h3>
+        <div class="btn-group no-print">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            <a href="{{ url_for('fee.index') }}" class="btn btn-outline">Back</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="receipt">
+            <div class="receipt-header">
+                <h2>Sarva Gyaan Academy</h2>
+                <p>Student Management System</p>
+                <hr>
+                <h3>FEE RECEIPT</h3>
+            </div>
+
+            <div class="receipt-details">
+                <div class="receipt-row">
+                    <span class="label">Receipt No:</span>
+                    <span class="value">{{ transaction.receipt_number }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Date:</span>
+                    <span class="value">{{ transaction.payment_date.strftime('%d %B %Y') }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Student Name:</span>
+                    <span class="value">{{ transaction.student.full_name if transaction.student else 'N/A' }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Student ID:</span>
+                    <span class="value">{{ transaction.student.student_id if transaction.student else 'N/A' }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Batch:</span>
+                    <span class="value">{{ transaction.student.batch.name if transaction.student and
+                        transaction.student.batch else 'N/A' }}</span>
+                </div>
+                {% if transaction.month_for %}
+                <div class="receipt-row">
+                    <span class="label">For Month:</span>
+                    <span class="value">{{ transaction.month_for }}</span>
+                </div>
+                {% endif %}
+                <div class="receipt-row">
+                    <span class="label">Payment Mode:</span>
+                    <span class="value">{{ transaction.payment_mode.replace('_', ' ').title() }}</span>
+                </div>
+                {% if transaction.transaction_id %}
+                <div class="receipt-row">
+                    <span class="label">Transaction ID:</span>
+                    <span class="value">{{ transaction.transaction_id }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="receipt-total">
+                <div class="text-muted">Amount Paid</div>
+                <div class="amount">₹{{ "{:,.2f}".format(transaction.amount) }}</div>
+            </div>
+
+            {% if transaction.discount and transaction.discount > 0 %}
+            <div class="receipt-row">
+                <span class="label">Discount:</span>
+                <span class="value">₹{{ "{:,.2f}".format(transaction.discount) }}</span>
+            </div>
+            {% endif %}
+            {% if transaction.fine and transaction.fine > 0 %}
+            <div class="receipt-row">
+                <span class="label">Fine:</span>
+                <span class="value">₹{{ "{:,.2f}".format(transaction.fine) }}</span>
+            </div>
+            {% endif %}
+
+            {% if transaction.description %}
+            <div class="receipt-row">
+                <span class="label">Notes:</span>
+                <span class="value">{{ transaction.description }}</span>
+            </div>
+            {% endif %}
+
+            <div class="receipt-footer">
+                <p>Thank you for your payment!</p>
+                <p>This is a computer-generated receipt.</p>
+                <p style="margin-top: 30px;">
+                    _________________________<br>
+                    Authorized Signature
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

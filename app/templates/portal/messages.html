@@ -1,0 +1,446 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Messages - Student Portal{% endblock %}
+{% block page_title %}Messages{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* WhatsApp-style inbox for student portal */
+    .inbox-container {
+        background: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        min-height: 450px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .inbox-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #075e54 0%, #128c7e 100%);
+        color: white;
+    }
+
+    .inbox-header-left h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .inbox-header-left p {
+        font-size: 12px;
+        opacity: 0.85;
+        margin: 3px 0 0 0;
+    }
+
+    .btn-new-chat {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 24px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+
+    .btn-new-chat:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+
+    .conversation-list {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .conv-item-wrapper {
+        position: relative;
+    }
+
+    .conv-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 20px;
+        text-decoration: none;
+        color: inherit;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.15s;
+        position: relative;
+    }
+
+    .conv-item:hover {
+        background: var(--bg-hover);
+    }
+
+    .conv-item.unread {
+        background: rgba(18, 140, 126, 0.05);
+    }
+
+    .conv-item.unread::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #25d366 0%, #128c7e 100%);
+    }
+
+    .conv-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #128c7e 0%, #25d366 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 600;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(18, 140, 126, 0.25);
+    }
+
+    .conv-avatar.admin {
+        background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+    }
+
+    .conv-avatar.teacher {
+        background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+    }
+
+    .conv-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .conv-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+
+    .conv-name-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .conv-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .conv-item.unread .conv-name {
+        font-weight: 700;
+    }
+
+    .conv-role {
+        font-size: 9px;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .conv-role.admin {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+    }
+
+    .conv-role.teacher {
+        background: rgba(99, 102, 241, 0.15);
+        color: #6366f1;
+    }
+
+    .conv-time {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .conv-item.unread .conv-time {
+        color: #25d366;
+        font-weight: 600;
+    }
+
+    .conv-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .conv-preview {
+        font-size: 14px;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+    }
+
+    .conv-badge {
+        background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 9px;
+        border-radius: 12px;
+        min-width: 22px;
+        text-align: center;
+    }
+
+    .conv-delete {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    .conv-item:hover .conv-delete {
+        opacity: 1;
+    }
+
+    .conv-delete-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.1);
+        border: none;
+        color: var(--danger);
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .conv-delete-btn:hover {
+        background: var(--danger);
+        color: white;
+    }
+
+    .inbox-empty {
+        text-align: center;
+        padding: 60px 40px;
+        background: var(--bg-body);
+    }
+
+    .inbox-empty-icon {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(18, 140, 126, 0.15) 0%, rgba(37, 211, 102, 0.1) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+    }
+
+    .inbox-empty-icon i {
+        font-size: 38px;
+        color: #128c7e;
+    }
+
+    .inbox-empty h3 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .inbox-empty p {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 24px;
+    }
+
+    .btn-start-chat {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 28px;
+        background: linear-gradient(135deg, #128c7e 0%, #25d366 100%);
+        color: white;
+        border: none;
+        border-radius: 28px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 16px rgba(18, 140, 126, 0.35);
+    }
+
+    .btn-start-chat:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+    }
+
+    .modal-box {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 360px;
+        width: 90%;
+    }
+
+    .modal-box h4 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .modal-box p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .modal-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+    }
+
+    .modal-btn.cancel {
+        background: var(--bg-hover);
+    }
+
+    .modal-btn.danger {
+        background: var(--danger);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="inbox-container">
+    <div class="inbox-header">
+        <div class="inbox-header-left">
+            <h2>Messages</h2>
+            <p>Chat with your teachers</p>
+        </div>
+        <a href="{{ url_for('chat.compose') }}" class="btn-new-chat">
+            <i class="bi bi-plus-lg"></i> New
+        </a>
+    </div>
+
+    {% if conversations %}
+    <div class="conversation-list">
+        {% for item in conversations %}
+        <div class="conv-item-wrapper" data-conv-id="{{ item.conversation.id }}">
+            <a href="{{ url_for('chat.view_conversation', conversation_id=item.conversation.id) }}"
+                class="conv-item {% if item.unread_count > 0 %}unread{% endif %}">
+                <div class="conv-avatar {{ item.other_user.role|lower }}">
+                    {{ item.other_user.username[0]|upper }}
+                </div>
+                <div class="conv-content">
+                    <div class="conv-header">
+                        <div class="conv-name-row">
+                            <span class="conv-name">{{ item.other_user.username }}</span>
+                            <span class="conv-role {{ item.other_user.role|lower }}">{{ item.other_user.role }}</span>
+                        </div>
+                        {% if item.last_message %}
+                        <span class="conv-time">{{ item.last_message.created_at.strftime('%I:%M %p') }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="conv-footer">
+                        <span class="conv-preview">
+                            {% if item.last_message %}
+                            {{ item.last_message.content[:45] }}{% if item.last_message.content|length > 45 %}...{%
+                            endif %}
+                            {% else %}
+                            Start conversation
+                            {% endif %}
+                        </span>
+                        {% if item.unread_count > 0 %}
+                        <span class="conv-badge">{{ item.unread_count }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="conv-delete">
+                    <button class="conv-delete-btn"
+                        onclick="event.preventDefault(); showDeleteModal({{ item.conversation.id }}, '{{ item.other_user.username }}')"
+                        title="Delete">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="inbox-empty">
+        <div class="inbox-empty-icon">
+            <i class="bi bi-chat-dots"></i>
+        </div>
+        <h3>No conversations yet</h3>
+        <p>Start a conversation with your teachers</p>
+        <a href="{{ url_for('chat.compose') }}" class="btn-start-chat">
+            <i class="bi bi-plus-lg"></i> Start New Chat
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <h4>Delete Conversation?</h4>
+        <p>Delete chat with <strong id="deleteName"></strong>?</p>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="hideDeleteModal()">Cancel</button>
+            <form id="deleteForm" method="POST" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="modal-btn danger">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showDeleteModal(id, name) {
+        document.getElementById('deleteName').textContent = name;
+        document.getElementById('deleteForm').action = `/chat/conversation/${id}/delete`;
+        document.getElementById('deleteModal').classList.add('show');
+    }
+
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('show');
+    }
+
+    document.getElementById('deleteModal').addEventListener('click', function (e) {
+        if (e.target === this) hideDeleteModal();
+    });
+</script>
+{% endblock %}

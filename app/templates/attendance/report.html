@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Report - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Attendance Report<small>Monthly summary report</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Monthly Attendance Summary</h3>
+    </div>
+
+    <div class="filter-bar">
+        <form method="GET" class="d-flex gap-3" style="width: 100%; align-items: flex-end; flex-wrap: wrap;">
+            <div class="filter-group">
+                <label>Batch</label>
+                <select name="batch_id" class="form-control form-select" required>
+                    <option value="">Select Batch</option>
+                    {% for batch in batches %}
+                    <option value="{{ batch.id }}" {{ 'selected' if selected_batch==batch.id }}>{{ batch.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Month</label>
+                <select name="month" class="form-control form-select">
+                    {% for m, name in months %}
+                    <option value="{{ m }}" {{ 'selected' if month==m }}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Year</label>
+                <input type="number" name="year" class="form-control" value="{{ year }}" min="2020" max="2030">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-file-text"></i> Generate Report</button>
+        </form>
+    </div>
+
+    <div class="card-body" style="padding: 0;">
+        {% if report_data %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Student ID</th>
+                    <th class="text-center">Total Days</th>
+                    <th class="text-center">Present</th>
+                    <th class="text-center">Absent</th>
+                    <th class="text-center">Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in report_data %}
+                <tr>
+                    <td><strong>{{ item.student.full_name }}</strong></td>
+                    <td>{{ item.student.student_id }}</td>
+                    <td class="text-center">{{ item.total_days }}</td>
+                    <td class="text-center text-success">{{ item.present_days }}</td>
+                    <td class="text-center text-danger">{{ item.absent_days }}</td>
+                    <td class="text-center">
+                        <span
+                            class="badge badge-{{ 'success' if item.percentage >= 75 else 'warning' if item.percentage >= 50 else 'danger' }}">
+                            {{ item.percentage }}%
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% elif selected_batch %}
+        <div class="empty-state">
+            <i class="bi bi-file-earmark-x"></i>
+            <h3>No Data Available</h3>
+            <p>No attendance records found for the selected criteria.</p>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-hand-index"></i>
+            <h3>Select Criteria</h3>
+            <p>Choose batch, month, and year to generate report.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

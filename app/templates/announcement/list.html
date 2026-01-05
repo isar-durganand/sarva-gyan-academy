@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Announcements{% endblock %}
+{% block page_title %}Announcements<small>Broadcast messages to students and teachers</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center gap-3">
+            <h3 class="card-title"><i class="bi bi-megaphone-fill"></i> All Announcements</h3>
+            <span class="badge badge-primary">{{ announcements|length }} total</span>
+        </div>
+        <a href="{{ url_for('announcement.add_announcement') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> New Announcement
+        </a>
+    </div>
+
+    <div class="card-body" style="padding: 20px;">
+        {% if announcements %}
+
+        {% set pinned = announcements|selectattr('is_pinned')|list %}
+        {% set unpinned = announcements|rejectattr('is_pinned')|list %}
+
+        {% if pinned %}
+        <div class="pinned-section">
+            <div class="pinned-section-header">
+                <i class="bi bi-pin-angle-fill"></i>
+                <span>Pinned Announcements</span>
+            </div>
+            <div class="announcement-grid">
+                {% for a in pinned %}
+                <div class="announcement-card pinned {{ 'urgent' if a.priority == 'URGENT' }}"
+                    data-type="{{ a.announcement_type }}">
+                    <div class="announcement-card-header">
+                        <div class="announcement-card-title">
+                            <h3>
+                                <i class="bi bi-pin-fill pin-icon"></i>
+                                {{ a.title }}
+                            </h3>
+                            <div class="announcement-meta">
+                                <span><i class="bi bi-calendar3"></i> {{ a.created_at.strftime('%d %b %Y') }}</span>
+                                <span
+                                    class="status-dot {{ 'active' if a.is_active and not a.is_expired else 'expired' if a.is_expired else 'inactive' }}">
+                                    {{ 'Active' if a.is_active and not a.is_expired else 'Expired' if a.is_expired else
+                                    'Inactive' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="announcement-badges">
+                            <span class="badge-type {{ a.announcement_type|lower }}">
+                                <i
+                                    class="bi bi-{{ 'bell-fill' if a.announcement_type == 'NOTICE' else 'calendar-x-fill' if a.announcement_type == 'HOLIDAY' else 'calendar-event-fill' if a.announcement_type == 'EVENT' else 'book-fill' }}"></i>
+                                {{ a.announcement_type }}
+                            </span>
+                            <span class="badge-priority {{ a.priority|lower }}">{{ a.priority }}</span>
+                        </div>
+                    </div>
+                    <div class="announcement-card-footer">
+                        <div class="announcement-target">
+                            <span><i class="bi bi-collection"></i> {% if a.batch %}{{ a.batch.name }}{% else %}All
+                                Batches{% endif %}</span>
+                            <span><i class="bi bi-people"></i> {{ a.target_audience }}</span>
+                        </div>
+                        <div class="announcement-actions">
+                            <a href="{{ url_for('announcement.view_announcement', id=a.id) }}"
+                                class="btn btn-sm btn-outline" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('announcement.edit_announcement', id=a.id) }}"
+                                class="btn btn-sm btn-outline" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('announcement.delete_announcement', id=a.id) }}"
+                                style="display:inline;" onsubmit="return confirm('Delete this announcement?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline text-danger" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if unpinned %}
+        <div class="announcement-grid">
+            {% for a in unpinned %}
+            <div class="announcement-card {{ 'urgent' if a.priority == 'URGENT' }}"
+                data-type="{{ a.announcement_type }}">
+                <div class="announcement-card-header">
+                    <div class="announcement-card-title">
+                        <h3>{{ a.title }}</h3>
+                        <div class="announcement-meta">
+                            <span><i class="bi bi-calendar3"></i> {{ a.created_at.strftime('%d %b %Y') }}</span>
+                            <span
+                                class="status-dot {{ 'active' if a.is_active and not a.is_expired else 'expired' if a.is_expired else 'inactive' }}">
+                                {{ 'Active' if a.is_active and not a.is_expired else 'Expired' if a.is_expired else
+                                'Inactive' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="announcement-badges">
+                        <span class="badge-type {{ a.announcement_type|lower }}">
+                            <i
+                                class="bi bi-{{ 'bell-fill' if a.announcement_type == 'NOTICE' else 'calendar-x-fill' if a.announcement_type == 'HOLIDAY' else 'calendar-event-fill' if a.announcement_type == 'EVENT' else 'book-fill' }}"></i>
+                            {{ a.announcement_type }}
+                        </span>
+                        <span class="badge-priority {{ a.priority|lower }}">{{ a.priority }}</span>
+                    </div>
+                </div>
+                <div class="announcement-card-footer">
+                    <div class="announcement-target">
+                        <span><i class="bi bi-collection"></i> {% if a.batch %}{{ a.batch.name }}{% else %}All Batches{%
+                            endif %}</span>
+                        <span><i class="bi bi-people"></i> {{ a.target_audience }}</span>
+                    </div>
+                    <div class="announcement-actions">
+                        <a href="{{ url_for('announcement.view_announcement', id=a.id) }}"
+                            class="btn btn-sm btn-outline" title="View">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{{ url_for('announcement.edit_announcement', id=a.id) }}"
+                            class="btn btn-sm btn-outline" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('announcement.delete_announcement', id=a.id) }}"
+                            style="display:inline;" onsubmit="return confirm('Delete this announcement?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline text-danger" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="announcement-empty-state">
+            <i class="bi bi-megaphone"></i>
+            <h3>No Announcements Yet</h3>
+            <p>Create your first announcement to broadcast to students and teachers.</p>
+            <a href="{{ url_for('announcement.add_announcement') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Create Announcement
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

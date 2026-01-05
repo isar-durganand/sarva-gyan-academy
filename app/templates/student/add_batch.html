@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Add Batch{% endblock %}
+{% block page_title %}Add Batch{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px;">
+    <div class="card-header">
+        <h3 class="card-title">Create New Batch</h3>
+    </div>
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="card-body">
+            <div class="form-group">
+                <label class="form-label">Batch Name <span class="required">*</span></label>
+                <input type="text" name="name" class="form-control" required placeholder="e.g. Class 10-A">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Class <span class="required">*</span></label>
+                <input type="text" name="class_name" class="form-control" required placeholder="e.g. Class 10">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Capacity</label>
+                <input type="number" name="capacity" class="form-control" value="30" min="1">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Teacher (Optional)</label>
+                <select name="teacher_id" class="form-control form-select">
+                    <option value="">No Teacher Assigned</option>
+                    {% for t in teachers %}<option value="{{ t.id }}">{{ t.username }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Create Batch</button>
+            <a href="{{ url_for('student.list_batches') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

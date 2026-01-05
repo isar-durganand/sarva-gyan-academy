@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}{{ announcement.title }}{% endblock %}
+{% block page_title %}{{ announcement.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .announcement-html-content {
+        font-size: 15px;
+        line-height: 1.8;
+        color: var(--text-secondary);
+    }
+
+    .announcement-html-content p {
+        margin-bottom: 12px;
+    }
+
+    .announcement-html-content ul,
+    .announcement-html-content ol {
+        margin-left: 24px;
+        margin-bottom: 12px;
+    }
+
+    .announcement-html-content li {
+        margin-bottom: 6px;
+    }
+
+    .announcement-html-content strong,
+    .announcement-html-content b {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .announcement-html-content h1,
+    .announcement-html-content h2,
+    .announcement-html-content h3 {
+        color: var(--text-primary);
+        margin: 16px 0 12px;
+    }
+
+    .announcement-html-content a {
+        color: var(--primary);
+        text-decoration: underline;
+    }
+
+    .announcement-image {
+        width: fit-content;
+        height: fit-content;
+        border-radius: var(--border-radius);
+        margin-top: 20px;
+        border: 1px solid var(--border-color);
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card announcement-view-card">
+    <div class="announcement-view-header" data-type="{{ announcement.announcement_type }}">
+        <div class="badges">
+            <span class="badge">
+                <i
+                    class="bi bi-{{ 'bell-fill' if announcement.announcement_type == 'NOTICE' else 'calendar-x-fill' if announcement.announcement_type == 'HOLIDAY' else 'calendar-event-fill' if announcement.announcement_type == 'EVENT' else 'book-fill' }}"></i>
+                {{ announcement.announcement_type }}
+            </span>
+            <span class="badge">{{ announcement.priority }}</span>
+            {% if announcement.is_expired %}
+            <span class="badge">Expired</span>
+            {% elif announcement.is_active %}
+            <span class="badge">Active</span>
+            {% else %}
+            <span class="badge">Inactive</span>
+            {% endif %}
+        </div>
+        <h1>
+            {% if announcement.is_pinned %}<i class="bi bi-pin-fill pin-icon"></i>{% endif %}
+            {{ announcement.title }}
+        </h1>
+    </div>
+
+    <div class="announcement-view-content">
+        <div class="announcement-html-content">
+            {{ announcement.content|safe }}
+        </div>
+
+        {% if announcement.image_url %}
+        <img src="{{ announcement.image_url }}" alt="Announcement image" class="announcement-image">
+        {% endif %}
+
+        <div class="info-chips">
+            <div class="info-chip">
+                <i class="bi bi-calendar-event"></i>
+                <span>Published: {{ announcement.publish_date.strftime('%d %b %Y') }}</span>
+            </div>
+            {% if announcement.expiry_date %}
+            <div class="info-chip">
+                <i class="bi bi-calendar-x"></i>
+                <span>Expires: {{ announcement.expiry_date.strftime('%d %b %Y') }}</span>
+            </div>
+            {% endif %}
+            <div class="info-chip">
+                <i class="bi bi-people-fill"></i>
+                <span>{{ announcement.target_audience }}</span>
+            </div>
+            {% if announcement.batch %}
+            <div class="info-chip">
+                <i class="bi bi-mortarboard-fill"></i>
+                <span>{{ announcement.batch.name }}</span>
+            </div>
+            {% endif %}
+            <div class="info-chip">
+                <i class="bi bi-person-fill"></i>
+                <span>{{ announcement.author.username if announcement.author else 'System' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <div class="d-flex gap-3">
+            <a href="{{ url_for('announcement.list_announcements') }}" class="btn btn-outline">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+            <a href="{{ url_for('announcement.edit_announcement', id=announcement.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Edit Announcement
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

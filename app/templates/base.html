@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sarva Gyaan Academy - Student Management System">
+    <title>{% block title %}Sarva Gyaan Academy{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    {% if current_user.is_authenticated %}
+    <!-- Sidebar (hidden on mobile) -->
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">SG</div>
+            <div class="sidebar-brand">
+                <h1>Sarva Gyaan</h1>
+                <span>Academy</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="{{ url_for('admin.dashboard') }}"
+                    class="nav-link {{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Management</div>
+                <a href="{{ url_for('student.list_students') }}"
+                    class="nav-link {{ 'active' if 'student' in request.endpoint }}">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Students</span>
+                </a>
+                <a href="{{ url_for('student.list_batches') }}"
+                    class="nav-link {{ 'active' if 'batch' in request.endpoint }}">
+                    <i class="bi bi-collection-fill"></i>
+                    <span>Batches</span>
+                </a>
+                <a href="{{ url_for('admin.list_teachers') }}"
+                    class="nav-link {{ 'active' if 'teacher' in request.endpoint }}">
+                    <i class="bi bi-person-badge-fill"></i>
+                    <span>Teachers</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Tracking</div>
+                <a href="{{ url_for('attendance.index') }}"
+                    class="nav-link {{ 'active' if 'attendance' in request.endpoint }}">
+                    <i class="bi bi-calendar-check-fill"></i>
+                    <span>Attendance</span>
+                </a>
+                <a href="{{ url_for('fee.index') }}" class="nav-link {{ 'active' if 'fee' in request.endpoint }}">
+                    <i class="bi bi-currency-rupee"></i>
+                    <span>Fees</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Reports</div>
+                <a href="{{ url_for('attendance.attendance_report') }}" class="nav-link">
+                    <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                    <span>Attendance Report</span>
+                </a>
+                <a href="{{ url_for('fee.fee_report') }}" class="nav-link">
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                    <span>Fee Report</span>
+                </a>
+            </div>
+
+            {% if current_user.role in ['ADMIN', 'TEACHER'] %}
+            <div class="nav-section">
+                <div class="nav-section-title">Communication</div>
+                <a href="{{ url_for('announcement.list_announcements') }}"
+                    class="nav-link {{ 'active' if 'announcement' in request.endpoint }}">
+                    <i class="bi bi-megaphone-fill"></i>
+                    <span>Announcements</span>
+                </a>
+                <a href="{{ url_for('chat.inbox') }}" class="nav-link {{ 'active' if 'chat' in request.endpoint }}">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span>Messages</span>
+                    {% if unread_message_count > 0 %}
+                    <span class="nav-badge">{{ unread_message_count }}</span>
+                    {% endif %}
+                </a>
+            </div>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    {{ current_user.username[0]|upper }}
+                </div>
+                <div class="user-details">
+                    <div class="user-name">{{ current_user.username }}</div>
+                    <div class="user-role">{{ current_user.role }}</div>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" title="Logout" style="color: var(--text-sidebar); opacity: 0.6;">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="main-content {% if not current_user.is_authenticated %}{{ 'ml-0' }}{% endif %}" {% if not
+        current_user.is_authenticated %}style="margin-left: 0;" {% endif %}>
+        {% if current_user.is_authenticated %}
+        <div class="top-header">
+            <div>
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="bi bi-sun-fill"></i>
+                    <span>Light</span>
+                </button>
+                <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline btn-sm">
+                    <i class="bi bi-key-fill"></i>
+                    <span>Password</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" data-auto-dismiss="5000">
+            <i
+                class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}x-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}-fill"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    {% if current_user.is_authenticated %}
+    <nav class="mobile-nav">
+        <div class="mobile-nav-items">
+            <a href="{{ url_for('admin.dashboard') }}"
+                class="mobile-nav-item {{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                <i class="bi bi-house-fill"></i>
+                <span>Home</span>
+            </a>
+            <a href="{{ url_for('student.list_students') }}"
+                class="mobile-nav-item {{ 'active' if 'student' in request.endpoint }}">
+                <i class="bi bi-people-fill"></i>
+                <span>Students</span>
+            </a>
+            <a href="{{ url_for('attendance.mark_attendance') }}"
+                class="mobile-nav-item {{ 'active' if 'attendance' in request.endpoint }}">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Attendance</span>
+            </a>
+            <a href="{{ url_for('fee.index') }}" class="mobile-nav-item {{ 'active' if 'fee' in request.endpoint }}">
+                <i class="bi bi-currency-rupee"></i>
+                <span>Fees</span>
+            </a>
+            <div class="mobile-nav-more">
+                <button class="mobile-nav-item" onclick="toggleMobileMenu()">
+                    <i class="bi bi-grid-fill"></i>
+                    <span>More</span>
+                </button>
+                <div class="mobile-more-menu" id="mobileMoreMenu">
+                    <a href="{{ url_for('student.list_batches') }}" class="mobile-more-item">
+                        <i class="bi bi-collection-fill"></i> Batches
+                    </a>
+                    {% if current_user.role == 'ADMIN' %}
+                    <a href="{{ url_for('admin.list_teachers') }}" class="mobile-more-item">
+                        <i class="bi bi-person-badge-fill"></i> Teachers
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('fee.list_structures') }}" class="mobile-more-item">
+                        <i class="bi bi-receipt"></i> Fee Structures
+                    </a>
+                    <a href="{{ url_for('auth.change_password') }}" class="mobile-more-item">
+                        <i class="bi bi-key-fill"></i> Change Password
+                    </a>
+                    <a href="{{ url_for('chat.inbox') }}" class="mobile-more-item">
+                        <i class="bi bi-chat-dots-fill"></i> Messages
+                        {% if unread_message_count > 0 %}
+                        <span class="mobile-more-badge">{{ unread_message_count }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="mobile-more-divider"></div>
+                    <a href="{{ url_for('auth.logout') }}" class="mobile-more-item text-danger">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

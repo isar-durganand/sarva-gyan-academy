@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Dashboard - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Fee Management<small>Track and collect student fees</small>{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stat-cards">
+    <div class="stat-card">
+        <div class="stat-icon success"><i class="bi bi-cash-stack"></i></div>
+        <div class="stat-info">
+            <h3>₹{{ "{:,.0f}".format(today_collection) }}</h3>
+            <p>Today's Collection</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon primary"><i class="bi bi-calendar-range"></i></div>
+        <div class="stat-info">
+            <h3>₹{{ "{:,.0f}".format(monthly_collection) }}</h3>
+            <p>This Month</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon danger"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="stat-info">
+            <h3>₹{{ "{:,.0f}".format(total_pending) }}</h3>
+            <p>Total Pending</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon warning"><i class="bi bi-receipt"></i></div>
+        <div class="stat-info">
+            <h3>{{ fee_structures|length }}</h3>
+            <p>Fee Structures</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-lightning-fill" style="color: var(--accent);"></i> Quick Actions</h3>
+    </div>
+    <div class="card-body">
+        <div class="quick-actions">
+            <a href="{{ url_for('fee.collect_fee') }}" class="btn btn-primary">
+                <i class="bi bi-cash"></i> Collect Fee
+            </a>
+            <a href="{{ url_for('fee.pending_fees') }}" class="btn btn-warning">
+                <i class="bi bi-hourglass-split"></i> Pending Fees
+            </a>
+            <a href="{{ url_for('fee.list_transactions') }}" class="btn btn-outline">
+                <i class="bi bi-list-ul"></i> All Transactions
+            </a>
+            <a href="{{ url_for('fee.list_structures') }}" class="btn btn-outline hide-mobile">
+                <i class="bi bi-gear"></i> Fee Structures
+            </a>
+            <a href="{{ url_for('fee.fee_report') }}" class="btn btn-outline hide-mobile">
+                <i class="bi bi-graph-up"></i> Reports
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Recent Transactions</h3>
+        <a href="{{ url_for('fee.list_transactions') }}" class="btn btn-sm btn-outline">View All</a>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if recent_transactions %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Receipt #</th>
+                        <th>Student</th>
+                        <th>Amount</th>
+                        <th class="hide-mobile">Mode</th>
+                        <th class="hide-mobile">Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in recent_transactions %}
+                    <tr>
+                        <td><strong>{{ txn.receipt_number }}</strong></td>
+                        <td>
+                            <a href="{{ url_for('student.view_student', id=txn.student_id) }}">
+                                {{ txn.student.full_name if txn.student else 'N/A' }}
+                            </a>
+                        </td>
+                        <td class="text-success"><strong>₹{{ "{:,.0f}".format(txn.amount) }}</strong></td>
+                        <td class="hide-mobile"><span class="badge badge-secondary">{{ txn.payment_mode }}</span></td>
+                        <td class="hide-mobile">{{ txn.payment_date.strftime('%d %b') }}</td>
+                        <td>
+                            <a href="{{ url_for('fee.view_receipt', id=txn.id) }}" class="btn btn-sm btn-outline"
+                                title="View Receipt">
+                                <i class="bi bi-receipt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-receipt"></i>
+            <h3>No Transactions Yet</h3>
+            <p>Start collecting fees to see transactions here.</p>
+            <a href="{{ url_for('fee.collect_fee') }}" class="btn btn-primary">Collect Fee</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

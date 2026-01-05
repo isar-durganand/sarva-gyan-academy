@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Add Student - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Add New Student<small>Register a new student in the system</small>{% endblock %}
+
+{% block content %}
+<form method="POST" enctype="multipart/form-data" data-validate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+        <div>
+            <!-- Personal Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-person"></i> Personal Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">First Name <span class="required">*</span></label>
+                            <input type="text" name="first_name" class="form-control" required
+                                placeholder="Enter first name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name <span class="required">*</span></label>
+                            <input type="text" name="last_name" class="form-control" required
+                                placeholder="Enter last name">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" name="date_of_birth" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Gender</label>
+                            <select name="gender" class="form-control form-select">
+                                <option value="">Select Gender</option>
+                                <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Blood Group</label>
+                            <select name="blood_group" class="form-control form-select">
+                                <option value="">Select</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-telephone"></i> Contact Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Phone Number <span class="required">*</span></label>
+                            <input type="tel" name="phone" class="form-control" required
+                                placeholder="10-digit mobile number" data-validate-phone>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" name="email" class="form-control" placeholder="student@example.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <textarea name="address" class="form-control" rows="2" placeholder="Full address"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">City</label>
+                            <input type="text" name="city" class="form-control" placeholder="City">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">State</label>
+                            <input type="text" name="state" class="form-control" placeholder="State">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" name="pincode" class="form-control" placeholder="Pincode">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parent Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-people"></i> Parent/Guardian Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Parent/Guardian Name</label>
+                            <input type="text" name="parent_name" class="form-control" placeholder="Full name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Parent Phone</label>
+                            <input type="tel" name="parent_phone" class="form-control" placeholder="Mobile number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Parent Email</label>
+                            <input type="email" name="parent_email" class="form-control"
+                                placeholder="parent@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Occupation</label>
+                            <input type="text" name="parent_occupation" class="form-control" placeholder="Occupation">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-info-circle"></i> Additional Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Previous School</label>
+                        <input type="text" name="previous_school" class="form-control"
+                            placeholder="Previous school name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Medical Conditions (if any)</label>
+                        <textarea name="medical_conditions" class="form-control" rows="2"
+                            placeholder="Any medical conditions to be aware of"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Remarks</label>
+                        <textarea name="remarks" class="form-control" rows="2"
+                            placeholder="Any additional notes"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div>
+            <!-- Photo Upload -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-camera"></i> Photo</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="avatar avatar-lg"
+                        style="width: 120px; height: 120px; font-size: 48px; margin: 0 auto 15px;">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <input type="file" name="photo" id="photo" class="form-control" accept="image/*">
+                    <p class="form-text">Max 2MB. JPG, PNG formats.</p>
+                </div>
+            </div>
+
+            <!-- Academic Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-mortarboard"></i> Academic</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Batch/Class <span class="required">*</span></label>
+                        <select name="batch_id" class="form-control form-select" required>
+                            <option value="">Select Batch</option>
+                            {% for batch in batches %}
+                            <option value="{{ batch.id }}">{{ batch.name }} ({{ batch.available_seats }} seats left)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                        <i class="bi bi-check-lg"></i> Register Student
+                    </button>
+                    <a href="{{ url_for('student.list_students') }}" class="btn btn-outline w-100 mt-2">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

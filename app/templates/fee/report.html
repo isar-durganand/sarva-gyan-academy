@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Report - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Fee Collection Report<small>Monthly analysis</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Monthly Report</h3>
+    </div>
+
+    <div class="filter-bar">
+        <form method="GET" class="d-flex gap-3" style="align-items: flex-end;">
+            <div class="filter-group">
+                <label>Month</label>
+                <select name="month" class="form-control form-select">
+                    {% for m, name in months %}
+                    <option value="{{ m }}" {{ 'selected' if month==m }}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Year</label>
+                <input type="number" name="year" class="form-control" value="{{ year }}" min="2020" max="2030">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-graph-up"></i> Generate</button>
+        </form>
+    </div>
+
+    <div class="card-body">
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="stat-icon success"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-info">
+                    <h3>₹{{ "{:,.0f}".format(total) }}</h3>
+                    <p>Total Collection</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Mode Breakdown -->
+        {% if mode_breakdown %}
+        <h4 class="mt-4 mb-3">By Payment Mode</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Mode</th>
+                    <th>Transactions</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mode, amount, count in mode_breakdown %}
+                <tr>
+                    <td><span class="badge badge-secondary">{{ mode }}</span></td>
+                    <td>{{ count }}</td>
+                    <td class="text-success">₹{{ "{:,.0f}".format(amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <!-- Daily Trend -->
+        {% if daily_collection %}
+        <h4 class="mt-4 mb-3">Daily Collection</h4>
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="dailyChart"></canvas>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    {% if daily_collection %}
+    const ctx = document.getElementById('dailyChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for date, total in daily_collection %}'{{ date.strftime("%d %b") }}'{% if not loop.last %}, {% endif %} {% endfor %}],
+    datasets: [{
+        label: 'Collection (₹)',
+        data: [{% for date, total in daily_collection %}{{ total }}{% if not loop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: '#10b981'
+        }]
+    },
+    options: {
+        responsive: true,
+            maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+    {% endif %}
+</script>
+{% endblock %}

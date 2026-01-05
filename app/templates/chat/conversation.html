@@ -1,0 +1,937 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with {{ other_user.username }} - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Enhanced WhatsApp-style chat interface */
+    .chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 140px);
+        max-height: 800px;
+        background: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .chat-top-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #075e54 0%, #128c7e 100%);
+        color: white;
+        position: relative;
+    }
+
+    .chat-back-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: white;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .chat-back-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .chat-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        cursor: pointer;
+    }
+
+    .chat-profile-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .chat-profile-info h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .chat-profile-info span {
+        font-size: 12px;
+        opacity: 0.85;
+    }
+
+    .chat-profile-info .online-status {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .chat-profile-info .online-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #25d366;
+    }
+
+    /* Chat options menu */
+    .chat-options {
+        position: relative;
+    }
+
+    .chat-options-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .chat-options-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .chat-options-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 8px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        min-width: 180px;
+        display: none;
+        z-index: 100;
+        overflow: hidden;
+    }
+
+    .chat-options-menu.show {
+        display: block;
+        animation: menuSlide 0.15s ease;
+    }
+
+    @keyframes menuSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .chat-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 14px;
+        border: none;
+        background: none;
+        width: 100%;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .chat-menu-item:hover {
+        background: var(--bg-hover);
+    }
+
+    .chat-menu-item i {
+        font-size: 18px;
+        width: 20px;
+        color: var(--text-muted);
+    }
+
+    .chat-menu-item.danger {
+        color: var(--danger);
+    }
+
+    .chat-menu-item.danger i {
+        color: var(--danger);
+    }
+
+    .chat-menu-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 4px 0;
+    }
+
+    /* Chat messages area with WhatsApp wallpaper */
+    .chat-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 60px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background-color: #0b141a;
+        background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    [data-theme="light"] .chat-body {
+        background-color: #efeae2;
+        background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .chat-empty-messages {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.4);
+        text-align: center;
+        padding: 40px;
+    }
+
+    .chat-empty-messages i {
+        font-size: 64px;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    .chat-empty-messages h4 {
+        font-size: 18px;
+        margin-bottom: 8px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .chat-empty-messages p {
+        font-size: 14px;
+        opacity: 0.7;
+    }
+
+    /* Message bubbles - Enhanced */
+    .msg {
+        max-width: 55%;
+        display: flex;
+        flex-direction: column;
+        animation: msgIn 0.2s ease;
+        position: relative;
+    }
+
+    @keyframes msgIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .msg.sent {
+        align-self: flex-end;
+    }
+
+    .msg.received {
+        align-self: flex-start;
+    }
+
+    .msg-bubble {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14.5px;
+        line-height: 1.4;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        position: relative;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    }
+
+    .msg.sent .msg-bubble {
+        background: #005c4b;
+        color: white;
+        border-top-right-radius: 0;
+    }
+
+    [data-theme="light"] .msg.sent .msg-bubble {
+        background: #d9fdd3;
+        color: #111b21;
+    }
+
+    .msg.received .msg-bubble {
+        background: #202c33;
+        color: white;
+        border-top-left-radius: 0;
+    }
+
+    [data-theme="light"] .msg.received .msg-bubble {
+        background: white;
+        color: #111b21;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    .msg-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+        margin-top: 2px;
+        padding-right: 4px;
+    }
+
+    .msg-time {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    [data-theme="light"] .msg-time {
+        color: rgba(0, 0, 0, 0.45);
+    }
+
+    .msg-status {
+        font-size: 15px;
+    }
+
+    .msg-status.read {
+        color: #53bdeb;
+    }
+
+    .msg-status.sent {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    [data-theme="light"] .msg-status.sent {
+        color: rgba(0, 0, 0, 0.35);
+    }
+
+    /* Message actions (on hover) */
+    .msg-actions {
+        position: absolute;
+        top: 4px;
+        opacity: 0;
+        transition: opacity 0.15s;
+        display: flex;
+        gap: 4px;
+    }
+
+    .msg.sent .msg-actions {
+        left: -50px;
+    }
+
+    .msg.received .msg-actions {
+        right: -50px;
+    }
+
+    .msg:hover .msg-actions {
+        opacity: 1;
+    }
+
+    .msg-action-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.3);
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.15s;
+    }
+
+    .msg-action-btn:hover {
+        background: rgba(0, 0, 0, 0.5);
+        transform: scale(1.1);
+    }
+
+    .msg-action-btn.delete:hover {
+        background: var(--danger);
+    }
+
+    /* Message input area */
+    .chat-input-bar {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        padding: 10px 16px;
+        background: #202c33;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    [data-theme="light"] .chat-input-bar {
+        background: #f0f2f5;
+        border-top-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .chat-input-area {
+        flex: 1;
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        background: #2a3942;
+        border-radius: 24px;
+        padding: 6px 16px;
+    }
+
+    [data-theme="light"] .chat-input-area {
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .emoji-btn {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: none;
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .emoji-btn:hover {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    [data-theme="light"] .emoji-btn {
+        color: rgba(0, 0, 0, 0.4);
+    }
+
+    [data-theme="light"] .emoji-btn:hover {
+        color: rgba(0, 0, 0, 0.6);
+    }
+
+    .chat-text-input {
+        flex: 1;
+        padding: 8px 0;
+        border: none;
+        font-size: 15px;
+        font-family: inherit;
+        background: transparent;
+        color: white;
+        resize: none;
+        max-height: 100px;
+        line-height: 1.4;
+    }
+
+    .chat-text-input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    [data-theme="light"] .chat-text-input {
+        color: #111b21;
+    }
+
+    [data-theme="light"] .chat-text-input::placeholder {
+        color: rgba(0, 0, 0, 0.4);
+    }
+
+    .chat-text-input:focus {
+        outline: none;
+    }
+
+    .chat-send-button {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #00a884;
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+        flex-shrink: 0;
+    }
+
+    .chat-send-button:hover {
+        background: #06cf9c;
+        transform: scale(1.08);
+    }
+
+    .chat-send-button i {
+        font-size: 20px;
+    }
+
+    /* Confirmation modal */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.show {
+        display: flex;
+    }
+
+    .modal-box {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 360px;
+        width: 90%;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+        animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .modal-box h4 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+    }
+
+    .modal-box p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .modal-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.15s;
+    }
+
+    .modal-btn.cancel {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .modal-btn.cancel:hover {
+        opacity: 0.8;
+    }
+
+    .modal-btn.danger {
+        background: var(--danger);
+        color: white;
+    }
+
+    .modal-btn.danger:hover {
+        background: #dc2626;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .chat-wrapper {
+            height: calc(100vh - 160px);
+            max-height: none;
+            border-radius: 0;
+            margin: -15px;
+        }
+
+        .chat-body {
+            padding: 16px;
+        }
+
+        .msg {
+            max-width: 80%;
+        }
+
+        .msg-actions {
+            display: none;
+        }
+
+        .chat-input-bar {
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-wrapper">
+    <div class="chat-top-bar">
+        <a href="{{ url_for('chat.inbox') }}" class="chat-back-btn">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="chat-profile">
+            <div class="chat-profile-avatar">{{ other_user.username[0]|upper }}</div>
+            <div class="chat-profile-info">
+                <h3>{{ other_user.username }}</h3>
+                <span class="online-status">
+                    <span class="online-dot"></span>
+                    {{ other_user.role }}
+                </span>
+            </div>
+        </div>
+        <div class="chat-options">
+            <button class="chat-options-btn" onclick="toggleChatMenu()" id="chatOptionsBtn">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <div class="chat-options-menu" id="chatOptionsMenu">
+                <button class="chat-menu-item" onclick="viewProfile()">
+                    <i class="bi bi-person"></i>
+                    View Profile
+                </button>
+                <button class="chat-menu-item" onclick="searchMessages()">
+                    <i class="bi bi-search"></i>
+                    Search Messages
+                </button>
+                <div class="chat-menu-divider"></div>
+                <button class="chat-menu-item" onclick="showClearModal()">
+                    <i class="bi bi-eraser"></i>
+                    Clear Chat
+                </button>
+                <button class="chat-menu-item danger" onclick="showDeleteModal()">
+                    <i class="bi bi-trash3"></i>
+                    Delete Conversation
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-body" id="chatBody">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="msg {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}"
+            id="msg-{{ message.id }}">
+            <div class="msg-bubble">{{ message.content }}</div>
+            <div class="msg-footer">
+                <span class="msg-time">{{ message.created_at.strftime('%I:%M %p') }}</span>
+                {% if message.sender_id == current_user.id %}
+                <i class="bi bi-check2-all msg-status {% if message.is_read %}read{% else %}sent{% endif %}"></i>
+                {% endif %}
+            </div>
+            {% if message.sender_id == current_user.id %}
+            <div class="msg-actions">
+                <button class="msg-action-btn delete" onclick="deleteMessage({{ message.id }})" title="Delete">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="chat-empty-messages">
+            <i class="bi bi-chat-heart"></i>
+            <h4>No messages yet</h4>
+            <p>Send a message to start the conversation!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <form action="{{ url_for('chat.send_message', conversation_id=conversation.id) }}" method="POST"
+        class="chat-input-bar">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="chat-input-area">
+            <button type="button" class="emoji-btn" title="Emoji">
+                <i class="bi bi-emoji-smile"></i>
+            </button>
+            <textarea name="content" id="messageInput" class="chat-text-input" placeholder="Type a message" rows="1"
+                required></textarea>
+        </div>
+        <button type="submit" class="chat-send-button">
+            <i class="bi bi-send-fill"></i>
+        </button>
+    </form>
+</div>
+
+<!-- Delete Conversation Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <h4>Delete Conversation?</h4>
+        <p>This will permanently delete all messages in this conversation. This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="hideDeleteModal()">Cancel</button>
+            <form action="{{ url_for('chat.delete_conversation', conversation_id=conversation.id) }}" method="POST"
+                style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="modal-btn danger">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Chat Modal -->
+<div class="modal-overlay" id="clearModal">
+    <div class="modal-box">
+        <h4>Clear Chat?</h4>
+        <p>This will delete all messages but keep the conversation. You can still message this person.</p>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="hideClearModal()">Cancel</button>
+            <form action="{{ url_for('chat.clear_conversation', conversation_id=conversation.id) }}" method="POST"
+                style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="modal-btn danger">Clear</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Scroll to bottom of chat
+    const chatBody = document.getElementById('chatBody');
+    if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
+
+    // Auto-resize textarea
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+
+        messageInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (this.value.trim()) this.form.submit();
+            }
+        });
+    }
+
+    // Chat options menu
+    function toggleChatMenu() {
+        const menu = document.getElementById('chatOptionsMenu');
+        menu.classList.toggle('show');
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.chat-options')) {
+            document.getElementById('chatOptionsMenu').classList.remove('show');
+        }
+    });
+
+    // Modal functions
+    function showDeleteModal() {
+        document.getElementById('deleteModal').classList.add('show');
+        document.getElementById('chatOptionsMenu').classList.remove('show');
+    }
+
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('show');
+    }
+
+    function showClearModal() {
+        document.getElementById('clearModal').classList.add('show');
+        document.getElementById('chatOptionsMenu').classList.remove('show');
+    }
+
+    function hideClearModal() {
+        document.getElementById('clearModal').classList.remove('show');
+    }
+
+    // Close modal on backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function (e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+            }
+        });
+    });
+
+    // Delete individual message
+    async function deleteMessage(messageId) {
+        if (!confirm('Delete this message?')) return;
+
+        try {
+            const response = await fetch(`/chat/api/message/${messageId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                const msgEl = document.getElementById(`msg-${messageId}`);
+                msgEl.style.animation = 'msgOut 0.2s ease forwards';
+                setTimeout(() => msgEl.remove(), 200);
+            } else {
+                alert('Could not delete message');
+            }
+        } catch (e) {
+            alert('Error deleting message');
+        }
+    }
+
+    // Placeholder functions
+    function viewProfile() {
+        alert('Profile view coming soon!');
+    }
+
+    function searchMessages() {
+        alert('Search coming soon!');
+    }
+
+    // ===== REAL-TIME MESSAGE POLLING =====
+    const POLL_INTERVAL = 3000; // Poll every 3 seconds
+    const conversationId = {{ conversation.id }};
+    let lastMessageId = getLastMessageId();
+    let pollTimer = null;
+
+    function getLastMessageId() {
+        const messages = document.querySelectorAll('.msg[id^="msg-"]');
+        if (messages.length === 0) return 0;
+        const lastMsg = messages[messages.length - 1];
+        return parseInt(lastMsg.id.replace('msg-', '')) || 0;
+    }
+
+    function createMessageElement(msg) {
+        const div = document.createElement('div');
+        div.className = `msg ${msg.is_mine ? 'sent' : 'received'}`;
+        div.id = `msg-${msg.id}`;
+
+        // Escape HTML in content
+        const escapedContent = msg.content
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        div.innerHTML = `
+            <div class="msg-bubble">${escapedContent}</div>
+            <div class="msg-footer">
+                <span class="msg-time">${msg.time}</span>
+                ${msg.is_mine ? `<i class="bi bi-check2-all msg-status ${msg.is_read ? 'read' : 'sent'}"></i>` : ''}
+            </div>
+            ${msg.is_mine ? `
+            <div class="msg-actions">
+                <button class="msg-action-btn delete" onclick="deleteMessage(${msg.id})" title="Delete">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+            ` : ''}
+        `;
+
+        return div;
+    }
+
+    async function pollNewMessages() {
+        try {
+            const response = await fetch(`/chat/api/conversation/${conversationId}/messages?after=${lastMessageId}`);
+            if (!response.ok) return;
+
+            const data = await response.json();
+
+            if (data.messages && data.messages.length > 0) {
+                const chatBody = document.getElementById('chatBody');
+                const emptyState = chatBody.querySelector('.chat-empty-messages');
+
+                // Remove empty state if exists
+                if (emptyState) emptyState.remove();
+
+                // Add new messages
+                data.messages.forEach(msg => {
+                    // Check if message already exists
+                    if (!document.getElementById(`msg-${msg.id}`)) {
+                        const msgEl = createMessageElement(msg);
+                        chatBody.appendChild(msgEl);
+                        lastMessageId = Math.max(lastMessageId, msg.id);
+                    }
+                });
+
+                // Scroll to bottom
+                chatBody.scrollTop = chatBody.scrollHeight;
+
+                // Play notification sound for received messages
+                const newReceived = data.messages.filter(m => !m.is_mine);
+                if (newReceived.length > 0 && document.hidden) {
+                    // Update page title to show new message
+                    document.title = `(${newReceived.length}) New Message - Chat`;
+                }
+            }
+
+            // Update read status of my messages
+            document.querySelectorAll('.msg.sent .msg-status.sent').forEach(el => {
+                el.classList.remove('sent');
+                el.classList.add('read');
+            });
+
+        } catch (e) {
+            console.log('Polling error:', e);
+        }
+    }
+
+    // Start polling
+    function startPolling() {
+        pollTimer = setInterval(pollNewMessages, POLL_INTERVAL);
+    }
+
+    // Stop polling when page is hidden
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+            if (pollTimer) clearInterval(pollTimer);
+        } else {
+            // Reset title and resume polling
+            document.title = 'Chat with {{ other_user.username }} - Sarva Gyaan Academy';
+            pollNewMessages(); // Immediate check
+            startPolling();
+        }
+    });
+
+    // Start polling on page load
+    startPolling();
+</script>
+<style>
+    @keyframes msgOut {
+        to {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.9);
+            height: 0;
+            margin: 0;
+            padding: 0;
+        }
+    }
+</style>
+{% endblock %}

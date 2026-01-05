@@ -1,0 +1,196 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile<small>{{ student.full_name }}</small>{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 300px 1fr; gap: 20px;">
+    <!-- Profile Card -->
+    <div class="card">
+        <div class="card-body" style="text-align: center; padding: 30px;">
+            {% if student.photo %}
+            <img src="{{ url_for('static', filename='uploads/' + student.photo) }}" alt="Profile"
+                style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;">
+            {% else %}
+            <div class="avatar avatar-lg" style="width: 120px; height: 120px; font-size: 48px; margin: 0 auto 15px;">
+                {{ student.first_name[0] }}{{ student.last_name[0] }}
+            </div>
+            {% endif %}
+
+            <h2 style="margin: 0;">{{ student.full_name }}</h2>
+            <p class="text-muted" style="margin: 5px 0;">{{ student.student_id }}</p>
+            <span class="badge badge-{{ 'success' if student.status == 'ACTIVE' else 'secondary' }}">{{ student.status
+                }}</span>
+
+            <hr style="margin: 20px 0;">
+
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="update_photo">
+                <div class="form-group">
+                    <label class="form-label">Change Profile Picture</label>
+                    <input type="file" name="photo" accept="image/*" class="form-control">
+                    <small class="text-muted">JPG, PNG (Max 2MB)</small>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm w-100" style="margin-top: 10px;">
+                    <i class="bi bi-upload"></i> Upload Photo
+                </button>
+            </form>
+
+            <hr style="margin: 20px 0;">
+
+            <!-- Login Info -->
+            <div style="text-align: left;">
+                <label class="text-muted" style="font-size: 12px;">Username</label>
+                <p><code
+                        style="background: var(--bg-secondary); padding: 4px 10px; border-radius: 4px; font-size: 12px;">{{ student.user.email if student.user else '-' }}</code>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Editable Profile Details -->
+    <div>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="update_details">
+
+            <!-- Personal Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-person-fill"></i> Personal Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" value="{{ student.full_name }}" disabled>
+                            <small class="text-muted">Contact admin to change name</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" name="date_of_birth" class="form-control"
+                                value="{{ student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else '' }}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Gender</label>
+                            <select name="gender" class="form-control form-select">
+                                <option value="">Select Gender</option>
+                                <option value="MALE" {{ 'selected' if student.gender=='MALE' }}>Male</option>
+                                <option value="FEMALE" {{ 'selected' if student.gender=='FEMALE' }}>Female</option>
+                                <option value="OTHER" {{ 'selected' if student.gender=='OTHER' }}>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Blood Group</label>
+                            <select name="blood_group" class="form-control form-select">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+" {{ 'selected' if student.blood_group=='A+' }}>A+</option>
+                                <option value="A-" {{ 'selected' if student.blood_group=='A-' }}>A-</option>
+                                <option value="B+" {{ 'selected' if student.blood_group=='B+' }}>B+</option>
+                                <option value="B-" {{ 'selected' if student.blood_group=='B-' }}>B-</option>
+                                <option value="AB+" {{ 'selected' if student.blood_group=='AB+' }}>AB+</option>
+                                <option value="AB-" {{ 'selected' if student.blood_group=='AB-' }}>AB-</option>
+                                <option value="O+" {{ 'selected' if student.blood_group=='O+' }}>O+</option>
+                                <option value="O-" {{ 'selected' if student.blood_group=='O-' }}>O-</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-geo-alt-fill"></i> Address</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Street Address</label>
+                        <textarea name="address" class="form-control" rows="2">{{ student.address or '' }}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">City</label>
+                            <input type="text" name="city" class="form-control" value="{{ student.city or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">State</label>
+                            <input type="text" name="state" class="form-control" value="{{ student.state or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">PIN Code</label>
+                            <input type="text" name="pincode" class="form-control" value="{{ student.pincode or '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parent/Guardian -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-people-fill"></i> Parent/Guardian Details</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Parent Name</label>
+                            <input type="text" name="parent_name" class="form-control"
+                                value="{{ student.parent_name or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Parent Phone</label>
+                            <input type="tel" name="parent_phone" class="form-control"
+                                value="{{ student.parent_phone or '' }}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Parent Email</label>
+                            <input type="email" name="parent_email" class="form-control"
+                                value="{{ student.parent_email or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Parent Occupation</label>
+                            <input type="text" name="parent_occupation" class="form-control"
+                                value="{{ student.parent_occupation or '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- School Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-mortarboard-fill"></i> Additional Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Previous School</label>
+                            <input type="text" name="previous_school" class="form-control"
+                                value="{{ student.previous_school or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Medical Conditions</label>
+                            <input type="text" name="medical_conditions" class="form-control"
+                                value="{{ student.medical_conditions or '' }}"
+                                placeholder="Any allergies or conditions">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="card">
+                <div class="card-body">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

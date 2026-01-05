@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Transactions - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Fee Transactions<small>All payment records</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">All Transactions</h3>
+        <span class="badge badge-primary">₹{{ "{:,.0f}".format(total_amount) }}</span>
+    </div>
+
+    <div class="filter-bar">
+        <form method="GET" style="display: flex; gap: 10px; width: 100%; align-items: flex-end; flex-wrap: wrap;">
+            <div class="filter-group" style="flex: 1; min-width: 120px;">
+                <label>Start Date</label>
+                <input type="date" name="start_date" class="form-control">
+            </div>
+            <div class="filter-group" style="flex: 1; min-width: 120px;">
+                <label>End Date</label>
+                <input type="date" name="end_date" class="form-control">
+            </div>
+            <div class="filter-group hide-mobile" style="flex: 1; min-width: 120px;">
+                <label>Payment Mode</label>
+                <select name="payment_mode" class="form-control form-select">
+                    <option value="">All Modes</option>
+                    {% for mode in payment_modes %}
+                    <option value="{{ mode }}">{{ mode.replace('_', ' ').title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-filter"></i><span class="hide-mobile">
+                    Filter</span></button>
+            <a href="{{ url_for('fee.list_transactions') }}" class="btn btn-outline hide-mobile">Reset</a>
+        </form>
+    </div>
+
+    <div class="card-body" style="padding: 0;">
+        {% if transactions.items %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Receipt #</th>
+                        <th>Student</th>
+                        <th>Amount</th>
+                        <th class="hide-mobile">Mode</th>
+                        <th class="hide-mobile">Date</th>
+                        <th class="hide-mobile">Collected By</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in transactions.items %}
+                    <tr>
+                        <td><strong>{{ txn.receipt_number }}</strong></td>
+                        <td>
+                            <a href="{{ url_for('student.view_student', id=txn.student_id) }}">
+                                {{ txn.student.full_name if txn.student else 'N/A' }}
+                            </a>
+                        </td>
+                        <td class="text-success"><strong>₹{{ "{:,.0f}".format(txn.amount) }}</strong></td>
+                        <td class="hide-mobile"><span class="badge badge-secondary">{{ txn.payment_mode }}</span></td>
+                        <td class="hide-mobile">{{ txn.payment_date.strftime('%d %b') }}</td>
+                        <td class="hide-mobile">{{ txn.collector.username if txn.collector else '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('fee.view_receipt', id=txn.id) }}" class="btn btn-sm btn-outline"
+                                title="View Receipt">
+                                <i class="bi bi-receipt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if transactions.pages > 1 %}
+        <div class="card-footer" style="display: flex; justify-content: center;">
+            <ul class="pagination">
+                {% if transactions.has_prev %}
+                <li class="page-item"><a class="page-link" href="?page={{ transactions.prev_num }}"><i
+                            class="bi bi-chevron-left"></i></a></li>
+                {% endif %}
+                {% for p in transactions.iter_pages() %}
+                {% if p %}
+                <li class="page-item {{ 'active' if p == transactions.page }}"><a class="page-link"
+                        href="?page={{ p }}">{{ p }}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% if transactions.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ transactions.next_num }}"><i
+                            class="bi bi-chevron-right"></i></a></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-receipt"></i>
+            <h3>No Transactions Found</h3>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

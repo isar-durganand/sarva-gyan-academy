@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ student.full_name }} - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Edit Student<small>Update student information</small>{% endblock %}
+
+{% block content %}
+<form method="POST" enctype="multipart/form-data" data-validate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+        <div>
+            <!-- Personal Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-person"></i> Personal Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">First Name <span class="required">*</span></label>
+                            <input type="text" name="first_name" class="form-control" required
+                                value="{{ student.first_name }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name <span class="required">*</span></label>
+                            <input type="text" name="last_name" class="form-control" required
+                                value="{{ student.last_name }}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" name="date_of_birth" class="form-control"
+                                value="{{ student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Gender</label>
+                            <select name="gender" class="form-control form-select">
+                                <option value="">Select Gender</option>
+                                <option value="MALE" {{ 'selected' if student.gender=='MALE' }}>Male</option>
+                                <option value="FEMALE" {{ 'selected' if student.gender=='FEMALE' }}>Female</option>
+                                <option value="OTHER" {{ 'selected' if student.gender=='OTHER' }}>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Blood Group</label>
+                            <select name="blood_group" class="form-control form-select">
+                                <option value="">Select</option>
+                                {% for bg in ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] %}
+                                <option value="{{ bg }}" {{ 'selected' if student.blood_group==bg }}>{{ bg }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-telephone"></i> Contact Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Phone Number <span class="required">*</span></label>
+                            <input type="tel" name="phone" class="form-control" required
+                                value="{{ student.phone or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" name="email" class="form-control" value="{{ student.email or '' }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <textarea name="address" class="form-control" rows="2">{{ student.address or '' }}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">City</label>
+                            <input type="text" name="city" class="form-control" value="{{ student.city or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">State</label>
+                            <input type="text" name="state" class="form-control" value="{{ student.state or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" name="pincode" class="form-control" value="{{ student.pincode or '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parent Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-people"></i> Parent/Guardian Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Parent/Guardian Name</label>
+                            <input type="text" name="parent_name" class="form-control"
+                                value="{{ student.parent_name or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Parent Phone</label>
+                            <input type="tel" name="parent_phone" class="form-control"
+                                value="{{ student.parent_phone or '' }}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Parent Email</label>
+                            <input type="email" name="parent_email" class="form-control"
+                                value="{{ student.parent_email or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Occupation</label>
+                            <input type="text" name="parent_occupation" class="form-control"
+                                value="{{ student.parent_occupation or '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-info-circle"></i> Additional Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Previous School</label>
+                        <input type="text" name="previous_school" class="form-control"
+                            value="{{ student.previous_school or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Medical Conditions</label>
+                        <textarea name="medical_conditions" class="form-control"
+                            rows="2">{{ student.medical_conditions or '' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Remarks</label>
+                        <textarea name="remarks" class="form-control" rows="2">{{ student.remarks or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div>
+            <!-- Student ID -->
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="avatar avatar-lg"
+                        style="width: 100px; height: 100px; font-size: 36px; margin: 0 auto 15px;">
+                        {{ student.first_name[0] }}{{ student.last_name[0] }}
+                    </div>
+                    <h3>{{ student.student_id }}</h3>
+                    <input type="file" name="photo" class="form-control mt-3" accept="image/*">
+                </div>
+            </div>
+
+            <!-- Academic Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="bi bi-mortarboard"></i> Academic</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Batch/Class</label>
+                        <select name="batch_id" class="form-control form-select">
+                            <option value="">Select Batch</option>
+                            {% for batch in batches %}
+                            <option value="{{ batch.id }}" {{ 'selected' if student.batch_id==batch.id }}>{{ batch.name
+                                }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-control form-select">
+                            <option value="ACTIVE" {{ 'selected' if student.status=='ACTIVE' }}>Active</option>
+                            <option value="INACTIVE" {{ 'selected' if student.status=='INACTIVE' }}>Inactive</option>
+                            <option value="GRADUATED" {{ 'selected' if student.status=='GRADUATED' }}>Graduated</option>
+                            <option value="DROPPED" {{ 'selected' if student.status=='DROPPED' }}>Dropped</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                        <i class="bi bi-check-lg"></i> Save Changes
+                    </button>
+                    <a href="{{ url_for('student.view_student', id=student.id) }}" class="btn btn-outline w-100 mt-2">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

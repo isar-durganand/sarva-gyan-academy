@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Collect Fee - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Collect Fee<small>Record fee payment</small>{% endblock %}
+
+{% block content %}
+<form method="POST" data-validate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <!-- Summary Card (Mobile: First) -->
+        <div class="card"
+            style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), transparent); border-color: rgba(16, 185, 129, 0.2);">
+            <div class="card-body" style="text-align: center; padding: 24px;">
+                <div style="color: var(--text-muted); margin-bottom: 8px; font-size: 14px;">Amount to Collect</div>
+                <div style="font-size: 40px; font-weight: 700; color: var(--success);">
+                    ₹<span id="summary_amount">0.00</span>
+                </div>
+                <button type="submit" class="btn btn-success" style="margin-top: 16px; width: 100%; max-width: 300px;">
+                    <i class="bi bi-check-lg"></i> Collect & Generate Receipt
+                </button>
+            </div>
+        </div>
+
+        <!-- Student Selection -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-person"></i> Select Student</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">Search Student <span class="required">*</span></label>
+                    <input type="text" class="form-control" placeholder="Type student name or ID..."
+                        data-student-search="#student_id"
+                        value="{{ selected_student.full_name if selected_student else '' }}" required>
+                    <input type="hidden" name="student_id" id="student_id"
+                        value="{{ selected_student.id if selected_student else '' }}" required>
+                    <p class="form-text">Start typing to search for students</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Details -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-cash"></i> Payment Details</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Amount (₹) <span class="required">*</span></label>
+                        <input type="number" name="amount" class="form-control" placeholder="0.00" step="0.01" min="1"
+                            required style="font-size: 18px; font-weight: 600;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Payment Date</label>
+                        <input type="date" name="payment_date" class="form-control" data-default-today>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Fee Type</label>
+                        <select name="fee_structure_id" class="form-control form-select">
+                            <option value="">Select Fee Type</option>
+                            {% for fs in fee_structures %}
+                            <option value="{{ fs.id }}">{{ fs.name }} - ₹{{ fs.amount }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">For Month</label>
+                        <input type="text" name="month_for" class="form-control" placeholder="e.g. January 2024">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Discount (₹)</label>
+                        <input type="number" name="discount" class="form-control" placeholder="0" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fine (₹)</label>
+                        <input type="number" name="fine" class="form-control" placeholder="0" step="0.01" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description/Notes</label>
+                    <input type="text" name="description" class="form-control" placeholder="Additional notes">
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Mode -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-credit-card"></i> Payment Mode</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">Mode</label>
+                    <select name="payment_mode" id="payment_mode" class="form-control form-select"
+                        onchange="togglePaymentFields()">
+                        {% for mode in payment_modes %}
+                        <option value="{{ mode }}">{{ mode.replace('_', ' ').title() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Cheque Details -->
+                <div id="cheque_fields" style="display: none;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Cheque Number</label>
+                            <input type="text" name="cheque_number" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cheque Date</label>
+                            <input type="date" name="cheque_date" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bank Name</label>
+                            <input type="text" name="bank_name" class="form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Online Transaction ID -->
+                <div id="online_fields" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Transaction ID</label>
+                        <input type="text" name="transaction_id" class="form-control"
+                            placeholder="UPI/Transaction Reference">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancel Button -->
+        <div style="text-align: center; padding-bottom: 20px;">
+            <a href="{{ url_for('fee.index') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function togglePaymentFields() {
+        const mode = document.getElementById('payment_mode').value;
+        document.getElementById('cheque_fields').style.display = mode === 'CHEQUE' ? 'block' : 'none';
+        document.getElementById('online_fields').style.display = ['UPI', 'BANK_TRANSFER', 'CARD'].includes(mode) ? 'block' : 'none';
+    }
+
+    // Update summary amount
+    const amountInput = document.querySelector('input[name="amount"]');
+    if (amountInput) {
+        amountInput.addEventListener('input', function () {
+            document.getElementById('summary_amount').textContent = parseFloat(this.value || 0).toFixed(2);
+        });
+    }
+
+    // Auto-fetch student details
+    const studentIdInput = document.getElementById('student_id');
+    if (studentIdInput) {
+        studentIdInput.addEventListener('change', function () {
+            const studentId = this.value;
+            if (studentId) {
+                fetchStudentFeeDetails(studentId);
+            }
+        });
+
+        // Check if value already exists on load
+        if (studentIdInput.value) {
+            fetchStudentFeeDetails(studentIdInput.value);
+        }
+    }
+
+    async function fetchStudentFeeDetails(studentId) {
+        try {
+            // Show loading state
+            document.body.style.cursor = 'wait';
+
+            const response = await fetch(`/fees/student-details/${studentId}`);
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                // 1. Select Fee Structure
+                if (data.fee_structure) {
+                    const structureSelect = document.querySelector('select[name="fee_structure_id"]');
+                    if (structureSelect) {
+                        structureSelect.value = data.fee_structure.id;
+
+                        // If amount is empty or 0, auto-fill it
+                        // Or always override? Let's override for convenience, user can change it
+                        if (amountInput) {
+                            amountInput.value = data.fee_structure.amount;
+                            // Trigger input event to update summary
+                            amountInput.dispatchEvent(new Event('input'));
+                        }
+                    }
+                }
+
+                // 2. Auto-fill Month (Current Month) if empty
+                const monthInput = document.querySelector('input[name="month_for"]');
+                if (monthInput && !monthInput.value) {
+                    const date = new Date();
+                    const monthName = date.toLocaleString('default', { month: 'long' });
+                    const year = date.getFullYear();
+                    monthInput.value = `${monthName} ${year}`;
+                }
+
+                // 3. Show pending dues alert if any
+                if (data.pending_amount > 0) {
+                    // Create or update a notification
+                    const container = document.querySelector('.card-body'); // Student card body
+                    let alert = document.getElementById('pending-alert');
+                    if (!alert) {
+                        alert = document.createElement('div');
+                        alert.id = 'pending-alert';
+                        alert.className = 'alert alert-danger mt-3 mb-0';
+                        alert.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> <strong>Pending Dues:</strong> <span></span>';
+                        // Insert after form-group in student selection card
+                        const formGroup = document.querySelector('input[data-student-search]').closest('.form-group');
+                        if (formGroup) formGroup.parentNode.insertBefore(alert, formGroup.nextSibling);
+                    }
+                    alert.querySelector('span').textContent = `₹${parseFloat(data.pending_amount).toLocaleString()}`;
+                    alert.style.display = 'block';
+                } else {
+                    const alert = document.getElementById('pending-alert');
+                    if (alert) alert.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching student details:', error);
+        } finally {
+            document.body.style.cursor = 'default';
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.full_name }} - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}Student Profile{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+    <div>
+        <!-- Profile Header -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3" style="flex-wrap: wrap;">
+                    <div class="avatar avatar-lg" style="width: 80px; height: 80px; font-size: 32px;">
+                        {{ student.first_name[0] }}{{ student.last_name[0] }}
+                    </div>
+                    <div style="flex: 1;">
+                        <h2 style="margin: 0; font-size: 24px;">{{ student.full_name }}</h2>
+                        <p class="text-muted" style="margin: 5px 0;">
+                            <strong>{{ student.student_id }}</strong> •
+                            {{ student.batch.name if student.batch else 'No Batch' }}
+                        </p>
+                        <span class="badge badge-{{ 'success' if student.status == 'ACTIVE' else 'secondary' }}">
+                            {{ student.status }}
+                        </span>
+                    </div>
+                    <div class="btn-group">
+                        <a href="{{ url_for('student.edit_student', id=student.id) }}" class="btn btn-primary">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a href="{{ url_for('fee.collect_fee', student_id=student.id) }}" class="btn btn-success">
+                            <i class="bi bi-cash"></i> Collect Fee
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-person"></i> Personal Information</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div><label class="text-muted">Date of Birth</label>
+                        <p>{{ student.date_of_birth.strftime('%d %B %Y') if student.date_of_birth else '-' }}</p>
+                    </div>
+                    <div><label class="text-muted">Age</label>
+                        <p>{{ student.age or '-' }} years</p>
+                    </div>
+                    <div><label class="text-muted">Gender</label>
+                        <p>{{ student.gender or '-' }}</p>
+                    </div>
+                    <div><label class="text-muted">Blood Group</label>
+                        <p>{{ student.blood_group or '-' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-telephone"></i> Contact Information</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div><label class="text-muted">Phone</label>
+                        <p>{{ student.phone or '-' }}</p>
+                    </div>
+                    <div><label class="text-muted">Email</label>
+                        <p>{{ student.email or '-' }}</p>
+                    </div>
+                </div>
+                <div><label class="text-muted">Address</label>
+                    <p>{{ student.address or '-' }}<br>{{ student.city or '' }} {{ student.state or '' }} {{
+                        student.pincode or '' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parent Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-people"></i> Parent/Guardian</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div><label class="text-muted">Name</label>
+                        <p>{{ student.parent_name or '-' }}</p>
+                    </div>
+                    <div><label class="text-muted">Phone</label>
+                        <p>{{ student.parent_phone or '-' }}</p>
+                    </div>
+                    <div><label class="text-muted">Email</label>
+                        <p>{{ student.parent_email or '-' }}</p>
+                    </div>
+                    <div><label class="text-muted">Occupation</label>
+                        <p>{{ student.parent_occupation or '-' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Attendance -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-calendar-check"></i> Recent Attendance</h3>
+                <a href="{{ url_for('attendance.student_attendance', student_id=student.id) }}"
+                    class="btn btn-sm btn-outline">View All</a>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                {% if recent_attendance %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for att in recent_attendance %}
+                        <tr>
+                            <td>{{ att.date.strftime('%d %b %Y') }}</td>
+                            <td>
+                                <span
+                                    class="badge badge-{{ 'success' if att.status == 'PRESENT' else 'warning' if att.status == 'LATE' else 'danger' }}">
+                                    {{ att.status }}
+                                </span>
+                            </td>
+                            <td>{{ att.remarks or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding: 30px;">
+                    <p>No attendance records found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div>
+        <!-- Quick Stats -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Quick Stats</h3>
+            </div>
+            <div class="card-body">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 36px; font-weight: 700; color: var(--success);">{{ attendance_percentage }}%
+                    </div>
+                    <div class="text-muted">Attendance Rate</div>
+                </div>
+                <hr>
+                <div style="text-align: center;">
+                    <div style="font-size: 28px; font-weight: 700; color: var(--primary);">₹{{
+                        "{:,.0f}".format(total_fees) }}</div>
+                    <div class="text-muted">Total Fees Paid</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrollment Info -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Enrollment</h3>
+            </div>
+            <div class="card-body">
+                <p><strong>Enrolled:</strong> {{ student.enrollment_date.strftime('%d %b %Y') if student.enrollment_date
+                    else '-' }}</p>
+                <p><strong>Batch:</strong> {{ student.batch.name if student.batch else '-' }}</p>
+                <p><strong>Previous School:</strong> {{ student.previous_school or '-' }}</p>
+            </div>
+        </div>
+
+        <!-- Login Credentials -->
+        {% if student.user %}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-key-fill"></i> Login Credentials</h3>
+            </div>
+            <div class="card-body">
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="margin: 0 0 10px;"><strong>Username:</strong>
+                        <code
+                            style="background: var(--bg-card); padding: 3px 8px; border-radius: 4px;">{{ student.user.email }}</code>
+                    </p>
+                    <p style="margin: 0;"><strong>Status:</strong>
+                        <span class="badge badge-{{ 'success' if student.user.is_active else 'danger' }}">
+                            {{ 'Active' if student.user.is_active else 'Inactive' }}
+                        </span>
+                    </p>
+                </div>
+                <a href="{{ url_for('student.edit_credentials', id=student.id) }}" class="btn btn-outline btn-sm w-100">
+                    <i class="bi bi-pencil"></i> Edit Credentials
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-key-fill"></i> Login Credentials</h3>
+            </div>
+            <div class="card-body text-center">
+                <p class="text-muted">No login account linked</p>
+                <a href="{{ url_for('student.create_credentials', id=student.id) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg"></i> Create Login
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Payments -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Recent Payments</h3>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                {% if recent_transactions %}
+                <table class="table">
+                    <tbody>
+                        {% for txn in recent_transactions %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('fee.view_receipt', id=txn.id) }}">{{ txn.receipt_number }}</a>
+                                <br><small class="text-muted">{{ txn.payment_date.strftime('%d %b') }}</small>
+                            </td>
+                            <td class="text-right text-success">₹{{ "{:,.0f}".format(txn.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center text-muted" style="padding: 20px;">No payments</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card">
+            <div class="card-body">
+                <button type="button" class="btn btn-danger w-100" onclick="showDeleteConfirm()">
+                    <i class="bi bi-person-x"></i> Delete Student
+                </button>
+
+                <!-- Inline Confirmation -->
+                <div id="deleteConfirm" class="inline-confirm" style="margin-top: 15px;">
+                    <div class="inline-confirm-content" style="flex-direction: column; gap: 15px;">
+                        <div class="inline-confirm-message">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>Permanently delete <strong>{{ student.full_name }}</strong>? This action cannot be
+                                undone.</span>
+                        </div>
+                        <div class="inline-confirm-actions" style="width: 100%;">
+                            <form method="POST" action="{{ url_for('student.delete_student', id=student.id) }}"
+                                style="flex: 1;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="bi bi-trash"></i> Yes, Delete
+                                </button>
+                            </form>
+                            <button type="button" class="btn btn-outline" style="flex: 1;"
+                                onclick="hideDeleteConfirm()">
+                                <i class="bi bi-x-lg"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showDeleteConfirm() {
+        document.getElementById('deleteConfirm').classList.add('show');
+    }
+
+    function hideDeleteConfirm() {
+        document.getElementById('deleteConfirm').classList.remove('show');
+    }
+</script>
+{% endblock %}

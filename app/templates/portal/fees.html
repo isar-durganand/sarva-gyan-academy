@@ -1,0 +1,61 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}My Fees{% endblock %}
+{% block page_title %}Fee Status<small>{{ student.full_name }}</small>{% endblock %}
+
+{% block content %}
+<!-- Summary -->
+<div class="stat-cards">
+    <div class="stat-card">
+        <div class="stat-icon success"><i class="bi bi-currency-rupee"></i></div>
+        <div class="stat-info">
+            <h3>₹{{ "{:,.0f}".format(total_paid) }}</h3>
+            <p>Total Paid</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon primary"><i class="bi bi-receipt"></i></div>
+        <div class="stat-info">
+            <h3>{{ transactions|length }}</h3>
+            <p>Payments Made</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-list-ul"></i> Payment History</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if transactions %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Receipt No.</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Mode</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td><strong>{{ txn.receipt_number }}</strong></td>
+                    <td>{{ txn.payment_date.strftime('%d %b %Y') }}</td>
+                    <td>{{ txn.description or 'Fee Payment' }}</td>
+                    <td><span class="badge badge-info">{{ txn.payment_mode }}</span></td>
+                    <td class="text-success"><strong>₹{{ "{:,.0f}".format(txn.amount) }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-receipt-cutoff"></i>
+            <h3>No Payments</h3>
+            <p>No fee payments recorded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

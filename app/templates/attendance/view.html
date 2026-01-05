@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}View Attendance - Sarva Gyaan Academy{% endblock %}
+{% block page_title %}View Attendance<small>Monthly attendance grid</small>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Attendance Calendar</h3>
+    </div>
+
+    <div class="filter-bar">
+        <form method="GET" class="d-flex gap-3" style="width: 100%; align-items: flex-end; flex-wrap: wrap;">
+            <div class="filter-group">
+                <label>Batch</label>
+                <select name="batch_id" class="form-control form-select" required>
+                    <option value="">Select Batch</option>
+                    {% for batch in batches %}
+                    <option value="{{ batch.id }}" {{ 'selected' if selected_batch==batch.id }}>{{ batch.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Month</label>
+                <select name="month" class="form-control form-select">
+                    {% for m, name in months %}
+                    <option value="{{ m }}" {{ 'selected' if month==m }}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Year</label>
+                <input type="number" name="year" class="form-control" value="{{ year }}" min="2020" max="2030">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> View</button>
+            <a href="{{ url_for('attendance.export_attendance', batch_id=selected_batch, month=month, year=year) }}"
+                class="btn btn-outline" {% if not selected_batch %}disabled{% endif %}>
+                <i class="bi bi-download"></i> Export CSV
+            </a>
+        </form>
+    </div>
+
+    <div class="card-body" style="padding: 0; overflow-x: auto;">
+        {% if students %}
+        <table class="table" style="font-size: 12px;">
+            <thead>
+                <tr>
+                    <th style="position: sticky; left: 0; background: var(--bg-table-stripe); z-index: 1;">Student</th>
+                    {% for day in range(1, days_in_month + 1) %}
+                    <th class="text-center" style="min-width: 30px;">{{ day }}</th>
+                    {% endfor %}
+                    <th class="text-center">%</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                {% set student_att = attendance_data.get(student.id, {}) %}
+                {% set present_count = 0 %}
+                {% set total_count = 0 %}
+                <tr>
+                    <td style="position: sticky; left: 0; background: var(--bg-card); z-index: 1;">
+                        <a href="{{ url_for('attendance.student_attendance', student_id=student.id) }}">{{
+                            student.full_name }}</a>
+                    </td>
+                    {% for day in range(1, days_in_month + 1) %}
+                    {% set att = student_att.get(day) %}
+                    <td class="text-center">
+                        {% if att %}
+                        {% if att.status == 'PRESENT' %}
+                        <span class="text-success" title="Present"><i class="bi bi-check-circle-fill"></i></span>
+                        {% set present_count = present_count + 1 %}
+                        {% elif att.status == 'LATE' %}
+                        <span class="text-warning" title="Late"><i class="bi bi-clock-fill"></i></span>
+                        {% set present_count = present_count + 1 %}
+                        {% else %}
+                        <span class="text-danger" title="Absent"><i class="bi bi-x-circle-fill"></i></span>
+                        {% endif %}
+                        {% set total_count = total_count + 1 %}
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td class="text-center">
+                        {% set percentage = (present_count / total_count * 100) if total_count > 0 else 0 %}
+                        <span
+                            class="badge badge-{{ 'success' if percentage >= 75 else 'warning' if percentage >= 50 else 'danger' }}">
+                            {{ "%.0f"|format(percentage) }}%
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% elif selected_batch %}
+        <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <h3>No Students Found</h3>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-hand-index"></i>
+            <h3>Select a Batch</h3>
+            <p>Choose a batch to view attendance calendar.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
