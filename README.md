@@ -10,12 +10,6 @@ A comprehensive web-based student database management system built with Python F
 - **Attendance Tracking**: Daily marking, monthly views, reports, CSV export
 - **Fee Management**: Collection, receipts, pending dues, reports
 
-### Coming Soon
-- Assignment Management
-- Examination & Results
-- Performance Analytics
-- Communication System
-
 ## Quick Start
 
 ### Prerequisites
