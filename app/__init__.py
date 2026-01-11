@@ -62,18 +62,23 @@ def create_app(config_class=Config):
 def seed_database():
     """Seed initial data if database is empty"""
     from app.models import User, Batch
+    from flask import current_app
+    
+    # Get admin credentials from config (environment variables)
+    admin_email = current_app.config.get('ADMIN_EMAIL', 'admin@sarvagyaan.com')
+    admin_password = current_app.config.get('ADMIN_PASSWORD', 'changeme123')
     
     # Check if admin exists
-    admin = User.query.filter_by(email='isardurganand@gmail.com').first()
+    admin = User.query.filter_by(email=admin_email).first()
     if not admin:
         # Create admin user
         admin = User(
             username='Admin',
-            email='isardurganand@gmail.com',
+            email=admin_email,
             role='ADMIN',
             is_active=True
         )
-        admin.set_password('Durganand@3456')
+        admin.set_password(admin_password)
         db.session.add(admin)
         
         # Create sample batches
@@ -89,3 +94,4 @@ def seed_database():
         
         db.session.commit()
         print("[OK] Database seeded with admin user and sample batches")
+

@@ -12,14 +12,25 @@ if not os.path.exists(instance_path):
     os.makedirs(instance_path)
 
 
+def get_database_url():
+    """Get database URL with Supabase compatibility fix"""
+    url = os.environ.get('DATABASE_URL')
+    if url:
+        # Supabase uses 'postgres://' but SQLAlchemy requires 'postgresql://'
+        if url.startswith('postgres://'):
+            url = url.replace('postgres://', 'postgresql://', 1)
+        return url
+    # Fallback to SQLite for local development
+    return 'sqlite:///' + os.path.join(basedir, 'instance', 'sarva_gyaan.db')
+
+
 class Config:
     """Base configuration"""
     # Secret key for session management
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'sarva-gyaan-academy-secret-key-2024'
     
     # Database configuration
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'instance', 'sarva_gyaan.db')
+    SQLALCHEMY_DATABASE_URI = get_database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Session configuration
@@ -42,6 +53,10 @@ class Config:
     CURRENCY = '₹'
     DATE_FORMAT = '%d-%m-%Y'
     DATETIME_FORMAT = '%d-%m-%Y %H:%M'
+    
+    # Admin credentials from environment
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@sarvagyaan.com')
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme123')
 
 
 class DevelopmentConfig(Config):
@@ -53,9 +68,6 @@ class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
     SESSION_COOKIE_SECURE = True
-    
-    # Use PostgreSQL in production
-    # SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
 
 
 class TestingConfig(Config):

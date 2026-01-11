@@ -12,6 +12,7 @@ python-dotenv==1.0.0
 
 # Database
 SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9
 
 # PDF and Excel generation
 reportlab==4.0.7
@@ -22,3 +23,6 @@ python-dateutil==2.8.2
 
 # Charts (optional, for backend chart generation)
 Pillow==10.1.0
+
+# Production server
+gunicorn==21.2.0
